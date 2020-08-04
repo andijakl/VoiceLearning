@@ -1,0 +1,140 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "learning assistant",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "StudentNameIntent",
+          "slots": [
+            {
+              "name": "StudentName",
+              "type": "AMAZON.FirstName"
+            }
+          ],
+          "samples": [
+            "{StudentName}",
+            "Call me {StudentName}",
+            "I am {StudentName}",
+            "My name is {StudentName}"
+          ]
+        },
+        {
+          "name": "ChooseCourseIntent",
+          "slots": [
+            {
+              "name": "course",
+              "type": "CourseName"
+            }
+          ],
+          "samples": [
+            "Lecture {course}",
+            "Start {course}",
+            "I want to train {course}",
+            "Train {course}",
+            "{course}",
+            "Start course {course}"
+          ]
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        },
+        {
+          "name": "NumericAnswerIntent",
+          "slots": [
+            {
+              "name": "numericAnswer",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "It is {numericAnswer}",
+            "I choose {numericAnswer}",
+            "I think {numericAnswer}",
+            "{numericAnswer}",
+            "My answer is {numericAnswer}"
+          ]
+        },
+        {
+          "name": "ResumeCourseIntent",
+          "slots": [],
+          "samples": [
+            "Please resume",
+            "I would like to resume",
+            "I want to continue",
+            "I want to resume",
+            "I want to resume the course",
+            "Continue",
+            "Resume",
+            "Continue course",
+            "Resume course"
+          ]
+        },
+        {
+          "name": "DeleteDataIntent",
+          "slots": [],
+          "samples": [
+            "Remove my progress",
+            "Remove my data",
+            "Clean my data",
+            "Clear my data",
+            "Delete everything you know about me",
+            "Forget my data",
+            "Delete my data"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "values": [
+            {
+              "id": "2",
+              "name": {
+                "value": "3D Visualization",
+                "synonyms": [
+                  "Graphics",
+                  "Visualization",
+                  "Three Dee Graphics",
+                  "3D Graphics"
+                ]
+              }
+            },
+            {
+              "id": "1",
+              "name": {
+                "value": "Web Technologies",
+                "synonyms": [
+                  "Web Tech",
+                  "Internet",
+                  "Web"
+                ]
+              }
+            }
+          ],
+          "name": "CourseName"
+        }
+      ]
+    }
+  },
+  "version": "6"
+}
