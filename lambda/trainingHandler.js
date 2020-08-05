@@ -1,5 +1,6 @@
 'use strict';
 const config = require('./config.js');
+const dbHandler = require('./dbHandler.js');
 
 // -------------------------------------------------------------------
 // Active training handler functions
@@ -99,7 +100,10 @@ async function getQuestionText(sessionAttributes, persistentAttributes, handlerI
     let introText = `Question number ${sessionAttributes.questionNumber}: `;
 
     // TODO: hardcoded question for now
-    let questionText = "Is accessibility only important for people with disabilities? Yes or no?";
+    //let questionText = "Is accessibility only important for people with disabilities? Yes or no?";
+    //let questionList = await dbHandler.getQuestionListForTraining(1);
+    let questionText = await dbHandler.getQuestion(1, 2);
+    // Depending on question type, add "yes or no?"
 
     // Store new question data
     sessionAttributes.questionId = 1;

@@ -1,5 +1,7 @@
 'use strict';
 
+// Warning: only deploy with Powershell 7, issues with "normal" PowerShell: https://github.com/alexa/ask-cli/issues/59
+
 const Alexa = require('ask-sdk-core');
 const AWS = require('aws-sdk');
 //const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
