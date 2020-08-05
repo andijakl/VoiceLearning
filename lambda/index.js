@@ -5,20 +5,17 @@ const AWS = require('aws-sdk');
 //const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 const { DynamoDbPersistenceAdapter } = require('ask-sdk-dynamodb-persistence-adapter');
 const persistenceAdapter = new DynamoDbPersistenceAdapter({ tableName : process.env.DYNAMODB_TABLE_NAME });
-const dbHandler = require('./dbHandler.js');
+const config = require('./config.js');
 const trainingHandler = require('./trainingHandler.js');
+const dbHandler = require('./dbHandler.js');
 //import { getRequestType, getIntentName, getSlotValue, SkillBuilders } from 'ask-sdk-core';
 //import * as Alexa from 'ask-sdk-core'
 //import persistenceAdapter from 'ask-sdk-s3-persistence-adapter';
 
 
-const states = {
-    STUDENT_NAME:  `_STUDENT_NAME`,
-    CHOOSE_COURSE: `_CHOOSE_COURSE`,
-    TRAINING: `_TRAINING`,
-    FINISHED: `_FINISHED`,
-};
 
+// -------------------------------------------------------------------
+// Launch intent handler
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
@@ -40,12 +37,12 @@ const LaunchRequestHandler = {
             let speakQuestion = `Would you like to resume your last course or start another course?`;
             speakOutput = `Welcome back ${persistentAttributes.studentName}! ${speakQuestion}`;
             repromptOutput = speakQuestion; 
-            sessionAttributes.state = states.CHOOSE_COURSE;
+            sessionAttributes.state = config.states.CHOOSE_COURSE;
         } else {
             speakOutput = "Hi and welcome to the learning asssistant! I can help you understand the most important concepts of your courses. First, please tell me your first name!"
             repromptOutput = "Please tell me your first name."
             // Initialize new user
-            trainingHandler.initializeUser();
+            trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
         }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
@@ -81,7 +78,7 @@ const StudentNameIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        if (sessionAttributes.state !== states.STUDENT_NAME)
+        if (sessionAttributes.state !== config.states.STUDENT_NAME)
         {
             // TODO handle case where we did not ask for the name
             speakOutput = `I understood a name, but did not expect that. Please repeat what you wanted to say in case I misunderstood you.`;
@@ -90,7 +87,7 @@ const StudentNameIntentHandler = {
             }
         } else {
             // Update attributes
-            sessionAttributes.state = states.CHOOSE_COURSE;
+            sessionAttributes.state = config.states.CHOOSE_COURSE;
             persistentAttributes.studentName = studentName;
             
             const availableCourses = await dbHandler.getTrainingNamesForSpeech();
@@ -113,15 +110,6 @@ const ChooseCourseIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'ChooseCourseIntent';
     },
     async handle(handlerInput) {
-        //let availableTrainings = await getTrainingList();
-        //let speakOut = "Available trainings: " + JSON.stringify(availableTrainings);
-        // let speakOut = await getTrainingNamesForSpeech();
-        // console.log(speakOut);
-        
-        // return handlerInput.responseBuilder
-        //     .speak(speakOut)
-        //     .getResponse();
-
         // Get Slots
         let course = Alexa.getSlotValue(handlerInput.requestEnvelope, 'course');
 
@@ -163,7 +151,7 @@ const ResumeCourseIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        if (sessionAttributes.state === states.CHOOSE_COURSE)
+        if (sessionAttributes.state === config.states.CHOOSE_COURSE)
         {
             if (persistentAttributes.currentCourse !== null) {
                 // Able to resume
@@ -266,6 +254,9 @@ const NumericAnswerIntentHandler = {
     }
 
 }
+
+// -------------------------------------------------------------------
+// Utility functions
 
 async function saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput) {
     if (repromptOutput === null) {

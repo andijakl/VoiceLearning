@@ -1,4 +1,5 @@
 'use strict';
+const config = require('./config.js');
 
 // -------------------------------------------------------------------
 // Active training handler functions
@@ -10,12 +11,12 @@ module.exports.initializeUser = function(sessionAttributes, persistentAttributes
     persistentAttributes.totalQuestionsAsked = 0;
     persistentAttributes.totalCorrectAnswers = 0;
     persistentAttributes.totalWrongAnswers = 0;
-    sessionAttributes.state = states.STUDENT_NAME;
+    sessionAttributes.state = config.states.STUDENT_NAME;
 }
 
 module.exports.startNewCourse = async function startNewCourse(sessionAttributes, persistentAttributes, handlerInput) {
     persistentAttributes.startedTrainings += 1;
-    sessionAttributes.state = states.TRAINING;
+    sessionAttributes.state = config.states.TRAINING;
     sessionAttributes.questionNumber = 0;
     sessionAttributes.score = 0;
     return await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput);
@@ -25,7 +26,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, sessi
     let speakOutput = null;
     let repromptOutput = null;
 
-    if (sessionAttributes.state === states.TRAINING) {
+    if (sessionAttributes.state === config.states.TRAINING) {
         // Update attributes
         if (sessionAttributes.questionType !== 1) {
             // We do not expect yes/no for this question type
@@ -39,7 +40,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, sessi
             ({speakOutput, repromptOutput} = await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput));
             speakOutput = introOutput + " " + speakOutput;
         }
-    } else if (sessionAttributes.state === states.FINISHED) {
+    } else if (sessionAttributes.state === config.states.FINISHED) {
         if (isYes) {
             let introOutput = `Restarting your course ${persistentAttributes.currentCourse}`;
             ({speakOutput, repromptOutput} = await module.exports.startNewCourse(sessionAttributes, persistentAttributes, handlerInput));
@@ -146,7 +147,7 @@ function getJsonForCourse(courseName, sessionAttributes) {
 }
 
 async function trainingFinished(sessionAttributes, persistentAttributes, handlerInput) {
-    sessionAttributes.state = states.FINISHED;
+    sessionAttributes.state = config.states.FINISHED;
     persistentAttributes.finishedTrainings += 1;
 }
 

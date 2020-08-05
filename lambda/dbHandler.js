@@ -3,7 +3,8 @@ const AWS = require('aws-sdk');
 
 // Configure AWS DynamoDB
 //AWS.config.update({region: 'REGION'});
-const DB_TABLE_NAME_TRAININGS = 'LearningAssistantTrainings';
+const DB_TABLE_TRAININGS = 'LearningAssistantTrainings';
+const DB_TABLE_QUESTIONS = 'LearningAssistantQuestions';
 let ddbInstance = null;
 
 
@@ -17,7 +18,7 @@ function connectToDb() {
 
 module.exports.getTrainingList = async function getTrainingList() {
     const params = {
-        TableName: DB_TABLE_NAME_TRAININGS
+        TableName: DB_TABLE_TRAININGS
     };
     try {
         const db = connectToDb();
