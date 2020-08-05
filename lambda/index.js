@@ -18,60 +18,6 @@ const states = {
     FINISHED: `_FINISHED`,
 };
 
-// Configure AWS DynamoDB
-//AWS.config.update({region: 'REGION'});
-// const DB_TABLE_NAME_TRAININGS = 'LearningAssistantTrainings';
-// let ddbInstance = null;
-
-// function connectToDb() {
-//     if (ddbInstance === null) {
-//         ddbInstance = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'});
-//     }
-//     return ddbInstance;
-// }
-
-    // let params = {
-    //     TableName: DB_TABLE_NAME_TRAININGS,
-    //     Key: {
-    //         'training-id': {N: '1'}
-    //     },
-    //     ProjectionExpression: 'ATTRIBUTE_NAME'
-    // }
-    // try {
-    //     db = connectToDb();
-    //     const data = await db.getItem(params).promise();
-    //     console.log("db get success!: " + data);
-    //     return data;
-    // } catch (err) {
-    //     console.log("Error getting data from db: " + err.message);
-    // }
-
-// async function getTrainingList() {
-//     const params = {
-//         TableName: DB_TABLE_NAME_TRAININGS
-//     };
-//     try {
-//         const db = connectToDb();
-//         const data = await db.scan(params).promise();
-//         //console.log("db get success!: " + JSON.stringify(data));
-//         return data.Items;
-//     } catch (err) {
-//         console.log("Error getting data from db: " + err.message);
-//     }
-// }
-
-// async function getTrainingNamesForSpeech() {
-//     let trainings = await getTrainingList();
-//     //console.log("got trainings: " + JSON.stringify(trainings));
-//     // Well, I'm sure there is some more elegant alternative for this in JS.
-//     let trainingNames = [];
-//     //for (let item in trainings) {
-//     trainings.forEach((item) => {
-//         trainingNames.push(item.TrainingName);
-//     });
-//     return trainingNames.join(", ");
-// }
-
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
@@ -214,10 +160,8 @@ const ChooseCourseIntentHandler = {
         persistentAttributes.currentCourse = course;
         
         // Get question
-        //let {speakOutput, repromptOutput} = await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput);
-        let outputs = await startNewCourse(sessionAttributes, persistentAttributes, handlerInput);
-        let speakOutput = introOutput + " " + outputs.speakOutput;
-        let repromptOutput = outputs.repromptOutput;
+        let {speakOutput, repromptOutput} = await startNewCourse(sessionAttributes, persistentAttributes, handlerInput);
+        speakOutput = introOutput + " " + speakOutput;
         
         // Save state
         persistentAttributes.repromptOutput = repromptOutput;
@@ -251,9 +195,8 @@ const ResumeCourseIntentHandler = {
             if (persistentAttributes.currentCourse !== null) {
                 // Able to resume
                 let introOutput = `Resuming course ${persistentAttributes.currentCourse}.`;
-                let outputs = await startNewCourse(sessionAttributes, persistentAttributes, handlerInput);
-                speakOutput = introOutput + " " + outputs.speakOutput;
-                repromptOutput = outputs.repromptOutput;
+                ({speakOutput, repromptOutput} = await startNewCourse(sessionAttributes, persistentAttributes, handlerInput));
+                speakOutput = introOutput + " " + speakOutput;
             } else {
                 speakOutput = `You have not started a course yet. Please choose a course first!`;
                 if (persistentAttributes.repromptOutput !== null) {
@@ -298,10 +241,7 @@ const YesIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        //let {speakOutput, repromptOutput} = await handleYesNoIntent(true, sessionAttributes, persistentAttributes, handlerInput);
-        let outputs = await handleYesNoIntent(true, sessionAttributes, persistentAttributes, handlerInput);
-        let speakOutput = outputs.speakOutput;
-        let repromptOutput = outputs.repromptOutput;
+        let {speakOutput, repromptOutput}  = await handleYesNoIntent(true, sessionAttributes, persistentAttributes, handlerInput);
         if (repromptOutput === null) {
             repromptOutput = speakOutput;
         }
@@ -330,10 +270,7 @@ const NoIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        //let {speakOutput, repromptOutput} = await handleYesNoIntent(false, sessionAttributes, persistentAttributes, handlerInput);
-        let outputs = await handleYesNoIntent(false, sessionAttributes, persistentAttributes, handlerInput);
-        let speakOutput = outputs.speakOutput;
-        let repromptOutput = outputs.repromptOutput;
+        let {speakOutput, repromptOutput} = await handleYesNoIntent(false, sessionAttributes, persistentAttributes, handlerInput);
         if (repromptOutput === null) {
             repromptOutput = speakOutput;
         }
@@ -405,18 +342,14 @@ async function handleYesNoIntent(isYes, sessionAttributes, persistentAttributes,
             let introOutput = "You said " + (isYes ? 'yes' : 'no') + ". ";
             // Yes/No is a valid answer - check if correct.
             introOutput += answerIsYesNoCorrect(isYes, sessionAttributes, persistentAttributes);
-            //({speakOutput, repromptOutput} = await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput));
-            let outputs = await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput);
-            
-            speakOutput = introOutput + " " + outputs.speakOutput;
-            repromptOutput = outputs.repromptOutput;
+            ({speakOutput, repromptOutput} = await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput));
+            speakOutput = introOutput + " " + speakOutput;
         }
     } else if (sessionAttributes.state === states.FINISHED) {
         if (isYes) {
             let introOutput = `Restarting your course ${persistentAttributes.currentCourse}`;
-            let outputs = await startNewCourse(sessionAttributes, persistentAttributes, handlerInput);
-            speakOutput = introOutput + " " + outputs.speakOutput;
-            repromptOutput = outputs.repromptOutput;
+            ({speakOutput, repromptOutput} = await startNewCourse(sessionAttributes, persistentAttributes, handlerInput));
+            speakOutput = introOutput + " " + speakOutput;
         } else {
             // Finished trainingand user doesn't want to restart
             speakOutput = "Thanks for training today. I hope I was able to help. Good bye!";
@@ -431,8 +364,7 @@ async function handleYesNoIntent(isYes, sessionAttributes, persistentAttributes,
         }
     }
 
-    //return { speakOutput, repromptOutput };
-    return { speakOutput: speakOutput, repromptOutput: repromptOutput };
+    return { speakOutput, repromptOutput };
 }
 
 async function getNextQuestion(sessionAttributes, persistentAttributes, handlerInput) {
@@ -449,8 +381,7 @@ async function getNextQuestion(sessionAttributes, persistentAttributes, handlerI
         ({speakOutput, repromptOutput} = await getQuestionText(sessionAttributes, persistentAttributes, handlerInput));
     }
 
-    //return {speakOutput, repromptOutput};
-    return { speakOutput: speakOutput, repromptOutput: repromptOutput };
+    return {speakOutput, repromptOutput};
 }
 
 // Function to retrieve the next question
@@ -480,8 +411,7 @@ async function getQuestionText(sessionAttributes, persistentAttributes, handlerI
     speakOutput = introText + questionText;
     repromptOutput = questionText;
 
-    //return {speakOutput, repromptOutput};
-    return { speakOutput: speakOutput, repromptOutput: repromptOutput };
+    return {speakOutput, repromptOutput};
 }
 
 function answerIsYesNoCorrect(answerIsYes, sessionAttributes, persistentAttributes) {
