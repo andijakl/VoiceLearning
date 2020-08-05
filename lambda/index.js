@@ -25,8 +25,6 @@ const LaunchRequestHandler = {
         let speakOutput = null;
         let repromptOutput = null;
 
-        console.log("learning assistant started");
-
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 

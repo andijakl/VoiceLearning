@@ -15,7 +15,6 @@ function connectToDb() {
     return ddbInstance;
 }
 
-
 module.exports.getTrainingList = async function getTrainingList() {
     const params = {
         TableName: DB_TABLE_TRAININGS
@@ -40,4 +39,12 @@ module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpe
         trainingNames.push(item.TrainingName);
     });
     return trainingNames.join(", ");
+}
+
+module.exports.getQuestionsForTraining = async function getQuestionsForTraining(trainingId) {
+    const params = {
+        TableName: DB_TABLE_QUESTIONS
+    };
+
+    // TODO Implement
 }
