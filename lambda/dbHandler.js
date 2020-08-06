@@ -111,6 +111,21 @@ module.exports.logAnswerForUser = async function logAnswerForUser(userId, traini
     }
 };
 
-// module.exports.getAnswersForUser = async function getAnswersForUser(userId, trainingId) {
-
-// };
+module.exports.getAnswersForUser = async function getAnswersForUser(userId, trainingId) {
+    const params = {
+        TableName: DB_TABLE_ANSWERS,
+        "KeyConditionExpression": "UserTrainingId = :utid",
+        "ExpressionAttributeValues": {
+            ":utid": `${userId}#${trainingId}`
+        },
+        //"ProjectionExpression": "QuestionId"
+    };
+    try {
+        const db = connectToDb();
+        const data = await db.query(params).promise();
+        console.log("Got answers list: " + JSON.stringify(data.Items));
+        return data.Items;
+    } catch (err) {
+        console.log("Error getting answers list from db: " + err.message);
+    }
+};

@@ -37,7 +37,7 @@ module.exports.selectTraining = async function selectTraining(userTrainingName, 
     return foundTraining;
 };
 
-module.exports.startNewTraining = async function startNewTraining(sessionAttributes, persistentAttributes) {
+module.exports.startNewTraining = async function startNewTraining(userId, sessionAttributes, persistentAttributes) {
     //console.log("c Persistent attributes: " + JSON.stringify(persistentAttributes));
     persistentAttributes.startedTrainings += 1;
     sessionAttributes.state = config.states.TRAINING;
@@ -45,7 +45,7 @@ module.exports.startNewTraining = async function startNewTraining(sessionAttribu
     sessionAttributes.score = 0;
     // Get current question list
     sessionAttributes.questionList = await dbHandler.getQuestionIdListForTraining(persistentAttributes.currentTrainingId);
-    return await getNextQuestion(sessionAttributes, persistentAttributes);
+    return await getNextQuestion(userId, sessionAttributes, persistentAttributes);
 };
 
 module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes) {
@@ -63,13 +63,13 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
             let introOutput = "You said " + (isYes ? "yes" : "no") + ". ";
             // Yes/No is a valid answer - check if correct.
             introOutput += await answerIsYesNoCorrect(isYes, userId, sessionAttributes, persistentAttributes);
-            ({speakOutput, repromptOutput} = await getNextQuestion(sessionAttributes, persistentAttributes));
+            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes));
             speakOutput = introOutput + " " + speakOutput;
         }
     } else if (sessionAttributes.state === config.states.FINISHED) {
         if (isYes) {
             let introOutput = `Restarting your course ${persistentAttributes.currentTrainingName}`;
-            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(sessionAttributes, persistentAttributes));
+            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             // Finished trainingand user doesn't want to restart
@@ -91,7 +91,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
 // -------------------------------------------------------------------
 // Private functions
 
-async function getNextQuestion(sessionAttributes, persistentAttributes) {
+async function getNextQuestion(userId, sessionAttributes, persistentAttributes) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -102,7 +102,7 @@ async function getNextQuestion(sessionAttributes, persistentAttributes) {
         repromptOutput = "Would you like to train again?";
         speakOutput += " " + repromptOutput;
     } else {
-        ({speakOutput, repromptOutput} = await getQuestionText(sessionAttributes, persistentAttributes));
+        ({speakOutput, repromptOutput} = await getQuestionText(userId, sessionAttributes, persistentAttributes));
     }
 
     return {speakOutput, repromptOutput};
@@ -110,8 +110,7 @@ async function getNextQuestion(sessionAttributes, persistentAttributes) {
 
 
 // Function to retrieve the next question
-async function getQuestionText(sessionAttributes, persistentAttributes) {
-    //console.log("I am in getQuestionText()");
+async function getQuestionText(userId, sessionAttributes, persistentAttributes) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -128,11 +127,12 @@ async function getQuestionText(sessionAttributes, persistentAttributes) {
     //let questionText = "Is accessibility only important for people with disabilities? Yes or no?";
 
     // eslint-disable-next-line no-unused-vars
-    //let questionScores = calculateQuestionScores(sessionAttributes, persistentAttributes);
+    //let questionScores = await calculateQuestionScores(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList);
 
     // Get which questions have been least often answered correctly by the user
     // Random choice if there are multiple questions with the same number of passes
-    let questionData = await dbHandler.getQuestion(1, 2);
+    //let questionData = await dbHandler.getQuestion(1, 2);
+    let questionData = await getBestNextNextQuestion(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList);
 
     // Depending on question type, add possible answers like: "yes or no?"
     if (questionData.QuestionType === 1) {
@@ -151,25 +151,56 @@ async function getQuestionText(sessionAttributes, persistentAttributes) {
     return {speakOutput, repromptOutput};
 }
 
+async function getBestNextNextQuestion(userId, trainingId, completeQuestionList) {
+    const sortedQuestionScores = await calculateQuestionScores(userId, trainingId, completeQuestionList);
+    // TODO: check if we have questions left!
+    // Take first (= best) question
+    const topQuestion = sortedQuestionScores.entries().next().value;
+    console.log("Top question ID: " + topQuestion[0] + ", score: " + topQuestion[1]);
+    // Get data for this question
+    let questionData = await dbHandler.getQuestion(trainingId, topQuestion[0]);
+    console.log("Question data: " + questionData);
+    return questionData;
+}
+
 // eslint-disable-next-line no-unused-vars
-async function calculateQuestionScores(sessionAttributes, persistentAttributes) {
-    // For all questions available for this training, 
-    // calculate how often the user answered correctly minus how often wrong
-    // let questionScores = new Map();
-    // const trainingId = persistentAttributes.currentTrainingId;
-    // sessionAttributes.questionList.forEach((curQuestionId) => {
-    //     // TODO: is there a more elegant operator for this in JavaScript like ?? in C#?
-    //     const correctForQuestion = persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.correctCount`) ?
-    //         persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.correctCount`) :
-    //         0;
-    //     const wrongForQuestion = persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.wrongCount`) ?
-    //         persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.wrongCount`) :
-    //         0;
-    //     const curQuestionScore = correctForQuestion - wrongForQuestion;
-    //     questionScores.set(curQuestionId, curQuestionScore);
-    // });
-    //console.log(`Question scores: ${questionScores}`);
-    //return questionScores;
+async function calculateQuestionScores(userId, trainingId, completeQuestionList) {
+    const answerList = await dbHandler.getAnswersForUser(userId, trainingId);
+    let questionScores = new Map();
+
+    // Loop over user answers and calculate score for each question
+    answerList.forEach(item => {
+        const correctCount = item.hasOwnProperty.call("CorrectCount") ? item.CorrectCount : 0;
+        const wrongCount = item.hasOwnProperty.call("WrongCount") ? item.WrongCount : 0;
+        questionScores.set(item.QuestionId, correctCount - wrongCount);
+    });
+    console.log("questionScores: " + questionScores);
+    for (let [key, value] of questionScores.entries()) {
+        console.log("key is " + key + ", value is " + value);
+    }
+
+    for (const [, questionId] of completeQuestionList.entries()) {
+        //console.log('%d: %s', i, value);
+        if (!questionScores.has(questionId)) {
+            // Question has never been asked - give it a score of -10 to prioritize it
+            // over questions that have already been asked, but with a wrong answer.
+            questionScores.set(questionId, -10);
+        }
+    }
+    console.log("questionScores with added unasked questions: " + questionScores);
+    for (let [key, value] of questionScores.entries()) {
+        console.log("key is " + key + ", value is " + value);
+    }
+
+    // TODO: keep session question list so that the same question isn't asked twice in a session!
+
+    const questionScoresSorted = new Map([...questionScores.entries()].sort((a, b) => a[1] - b[1]));
+    console.log("Sorted question scores: " + questionScoresSorted);
+    for (let [key, value] of questionScoresSorted.entries()) {
+        console.log("key is " + key + ", value is " + value);
+    }
+
+    return questionScoresSorted;
 }
 
 
@@ -191,13 +222,6 @@ async function answerCorrect(userId, sessionAttributes, persistentAttributes) {
     const trainingId = persistentAttributes.currentTrainingId;
     const questionId = sessionAttributes.questionId;
     await dbHandler.logAnswerForUser(userId, trainingId, questionId, true);
-    // if (persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${questionId}.correctCount`)) {
-    //     persistentAttributes.answersForTrainings[trainingId][questionId]["correctCount"] += 1;
-    // } else {
-    //     //persistentAttributes.answersForTrainings[trainingId][questionId]["correctCount"] = 1;
-    //     Object.assign(persistentAttributes.answersForTrainings, [trainingId][questionId]["correctCount"] = 1);
-    //     //persistentAttributes.answersForTrainings = { ... [trainingId][questionId]["correctCount"] = 1;
-    // }
 
     let speakText = "Congratulations, the answer is correct!";
     return speakText;
@@ -209,11 +233,6 @@ async function answerWrong(userId, sessionAttributes, persistentAttributes) {
     const trainingId = persistentAttributes.currentTrainingId;
     const questionId = sessionAttributes.questionId;
     await dbHandler.logAnswerForUser(userId, trainingId, questionId, false);
-    // if (persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${questionId}.wrongCount`)) {
-    //     persistentAttributes.answersForTrainings[trainingId][questionId]["wrongCount"] += 1;
-    // } else {
-    //     persistentAttributes.answersForTrainings[trainingId][questionId]["wrongCount"] = 1;
-    // }
 
     let speakText = "Sorry, your answer was wrong.";
     return speakText;

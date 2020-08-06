@@ -35,6 +35,7 @@ const LaunchRequestHandler = {
         persistentAttributes.repromptOutput = null;
 
         if (persistentAttributes.studentName) {
+            // TODO: Check if there is a course to resume!
             let speakQuestion = "Would you like to resume your last course or start another course?";
             speakOutput = `Welcome back ${persistentAttributes.studentName}! ${speakQuestion}`;
             repromptOutput = speakQuestion; 
@@ -120,6 +121,7 @@ const ChooseCourseIntentHandler = {
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
         // Match slot value with available courses and get its ID from the DB
         const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes);
@@ -127,7 +129,7 @@ const ChooseCourseIntentHandler = {
             // Training selected successfully
             let introOutput = `You chose the course: ${persistentAttributes.currentTrainingName}. Let's get started! `;
             // Get question
-            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes));
+            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             // Unable to match slot to training in DB
@@ -157,13 +159,14 @@ const ResumeCourseIntentHandler = {
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
         if (sessionAttributes.state === config.states.CHOOSE_COURSE)
         {
             if (persistentAttributes.currentTrainingName !== null) {
                 // Able to resume
                 let introOutput = `Resuming course ${persistentAttributes.currentTrainingName}.`;
-                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes));
+                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 speakOutput = "You have not started a course yet. Please choose a course first!";
