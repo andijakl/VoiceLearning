@@ -2,8 +2,7 @@
 const AWS = require('aws-sdk');
 
 // Configure AWS DynamoDB
-// TODO: probably set db region?
-//AWS.config.update({region: 'REGION'});
+AWS.config.update({region: 'eu-west-1'});
 const DB_TABLE_TRAININGS = 'LearningAssistantTrainings';
 const DB_TABLE_QUESTIONS = 'LearningAssistantQuestions';
 let ddbInstance = null;
@@ -46,9 +45,9 @@ module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpe
 module.exports.getQuestionListForTraining = async function getQuestionListForTraining(trainingId) {
     const params = {
         TableName: DB_TABLE_QUESTIONS,
-        "KeyConditionExpression": "TrainingId = :v1",
+        "KeyConditionExpression": "TrainingId = :tid",
         "ExpressionAttributeValues": {
-            ":v1": {"N": trainingId}
+            ":tid": trainingId
         },
         "ProjectionExpression": "QuestionId"
     };
@@ -56,7 +55,7 @@ module.exports.getQuestionListForTraining = async function getQuestionListForTra
     try {
         const db = connectToDb();
         const data = await db.query(params).promise();
-        console.log("Got question list: " + JSON.stringify(data.Items));
+        console.log("Got question list: " + JSON.stringify(data));
         return data.Items;
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
@@ -81,8 +80,8 @@ module.exports.getQuestion = async function getQuestion(trainingId, questionId) 
     try {
         const db = connectToDb();
         const data = await db.get(params).promise();
-        console.log("Got question: " + JSON.stringify(data.Items));
-        return data.Items;
+        console.log("Got question: " + JSON.stringify(data.Item));
+        return data.Item;
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
     }

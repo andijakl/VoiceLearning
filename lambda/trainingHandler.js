@@ -97,22 +97,24 @@ async function getQuestionText(sessionAttributes, persistentAttributes, handlerI
     // Get question text
     //const random = getRandom(0, data.length - 1);
     //const questionDb = require(jsonFilePath);
-    let introText = `Question number ${sessionAttributes.questionNumber}: `;
+    const introText = `Question number ${sessionAttributes.questionNumber}: `;
 
     // TODO: hardcoded question for now
     //let questionText = "Is accessibility only important for people with disabilities? Yes or no?";
-    //let questionList = await dbHandler.getQuestionListForTraining(1);
-    let questionText = await dbHandler.getQuestion(1, 2);
+    let questionList = await dbHandler.getQuestionListForTraining(1);
+    const questionData = await dbHandler.getQuestion(1, 2);
     // Depending on question type, add "yes or no?"
 
-    // Store new question data
-    sessionAttributes.questionId = 1;
-    sessionAttributes.questionType = 1;
-    sessionAttributes.correctAnswer = 0;
-    sessionAttributes.questionText = questionText;
+    console.log("Question text: " + sessionAttributes.questionText);
 
-    speakOutput = introText + questionText;
-    repromptOutput = questionText;
+    // Store new question data
+    sessionAttributes.questionId = questionData.QuestionId;
+    sessionAttributes.questionType = questionData.QuestionType;
+    sessionAttributes.correctAnswer = questionData.CorrectAnswer;
+    sessionAttributes.questionText = questionData.QuestionText;
+
+    speakOutput = introText + sessionAttributes.questionText;
+    repromptOutput = sessionAttributes.questionText;
 
     return {speakOutput, repromptOutput};
 }
