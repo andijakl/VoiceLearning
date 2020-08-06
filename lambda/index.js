@@ -1,15 +1,16 @@
-'use strict';
+"use strict";
 
 // Warning: only deploy with Powershell 7, issues with "normal" PowerShell: https://github.com/alexa/ask-cli/issues/59
 
-const Alexa = require('ask-sdk-core');
-const AWS = require('aws-sdk');
+const Alexa = require("ask-sdk-core");
+//const AWS = require("aws-sdk");
 //const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
-const { DynamoDbPersistenceAdapter } = require('ask-sdk-dynamodb-persistence-adapter');
+const { DynamoDbPersistenceAdapter } = require("ask-sdk-dynamodb-persistence-adapter");
+// eslint-disable-next-line no-undef
 const persistenceAdapter = new DynamoDbPersistenceAdapter({ tableName : process.env.DYNAMODB_TABLE_NAME });
-const config = require('./config.js');
-const trainingHandler = require('./trainingHandler.js');
-const dbHandler = require('./dbHandler.js');
+const config = require("./config.js");
+const trainingHandler = require("./trainingHandler.js");
+const dbHandler = require("./dbHandler.js");
 //import { getRequestType, getIntentName, getSlotValue, SkillBuilders } from 'ask-sdk-core';
 //import * as Alexa from 'ask-sdk-core'
 //import persistenceAdapter from 'ask-sdk-s3-persistence-adapter';
@@ -21,7 +22,7 @@ const dbHandler = require('./dbHandler.js');
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "LaunchRequest";
     },
     async handle(handlerInput) {
         let speakOutput = null;
@@ -34,13 +35,13 @@ const LaunchRequestHandler = {
         persistentAttributes.repromptOutput = null;
 
         if (persistentAttributes.studentName) {
-            let speakQuestion = `Would you like to resume your last course or start another course?`;
+            let speakQuestion = "Would you like to resume your last course or start another course?";
             speakOutput = `Welcome back ${persistentAttributes.studentName}! ${speakQuestion}`;
             repromptOutput = speakQuestion; 
             sessionAttributes.state = config.states.CHOOSE_COURSE;
         } else {
-            speakOutput = "Hi and welcome to the learning asssistant! I can help you understand the most important concepts of your courses. First, please tell me your first name!"
-            repromptOutput = "Please tell me your first name."
+            speakOutput = "Hi and welcome to the learning asssistant! I can help you understand the most important concepts of your courses. First, please tell me your first name!";
+            repromptOutput = "Please tell me your first name.";
             // Initialize new user
             trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
         }
@@ -64,12 +65,12 @@ const LaunchRequestHandler = {
 
 const StudentNameIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'StudentNameIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "StudentNameIntent";
     },
     async handle(handlerInput) {
         // Get Slots
-        const studentName = Alexa.getSlotValue(handlerInput.requestEnvelope, 'StudentName');
+        const studentName = Alexa.getSlotValue(handlerInput.requestEnvelope, "StudentName");
 
         let speakOutput = null;
         let repromptOutput = null;
@@ -81,9 +82,9 @@ const StudentNameIntentHandler = {
         if (sessionAttributes.state !== config.states.STUDENT_NAME)
         {
             // TODO handle case where we did not ask for the name
-            speakOutput = `I understood a name, but did not expect that. Please repeat what you wanted to say in case I misunderstood you.`;
+            speakOutput = "I understood a name, but did not expect that. Please repeat what you wanted to say in case I misunderstood you.";
             if (persistentAttributes.repromptOutput !== null) {
-                speakOutput += ' ' + persistentAttributes.repromptOutput;
+                speakOutput += " " + persistentAttributes.repromptOutput;
             }
         } else {
             // Update attributes
@@ -92,7 +93,7 @@ const StudentNameIntentHandler = {
             
             const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
             speakOutput = `Hi ${studentName}. I'm happy to help you with learning for your courses. I have content for these courses: ${availableTrainings}. Which course should I start?`;
-            repromptOutput = 'Please choose one of these courses: ' + availableTrainings;
+            repromptOutput = "Please choose one of these courses: " + availableTrainings;
         }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
@@ -106,12 +107,12 @@ const StudentNameIntentHandler = {
 
 const ChooseCourseIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'ChooseCourseIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ChooseCourseIntent";
     },
     async handle(handlerInput) {
         // Get Slots
-        let userTrainingName = Alexa.getSlotValue(handlerInput.requestEnvelope, 'course');
+        let userTrainingName = Alexa.getSlotValue(handlerInput.requestEnvelope, "course");
         
         let speakOutput = null;
         let repromptOutput = null;
@@ -120,19 +121,16 @@ const ChooseCourseIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        // TODO: match slot value with available courses and get its ID from the DB
-        //console.log("a Persistent attributes: " + JSON.stringify(persistentAttributes));
+        // Match slot value with available courses and get its ID from the DB
         const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes);
         if (selectedTrainingInfo !== null) {
             // Training selected successfully
             let introOutput = `You chose the course: ${persistentAttributes.currentTrainingName}. Let's get started! `;
-            //console.log("b Persistent attributes: " + JSON.stringify(persistentAttributes));
             // Get question
-            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes, handlerInput));
+            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             // Unable to match slot to training in DB
-            //console.log("x Persistent attributes: " + JSON.stringify(persistentAttributes));
             speakOutput = `Sorry, I was unable to match your selection ${userTrainingName} to any of the available trainings. Please try again or contact the skill administrators!`;
         }
 
@@ -149,8 +147,8 @@ const ChooseCourseIntentHandler = {
 
 const ResumeCourseIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'ResumeCourseIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ResumeCourseIntent";
     },
     async handle(handlerInput) {
         let speakOutput = null;
@@ -165,18 +163,18 @@ const ResumeCourseIntentHandler = {
             if (persistentAttributes.currentTrainingName !== null) {
                 // Able to resume
                 let introOutput = `Resuming course ${persistentAttributes.currentTrainingName}.`;
-                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes, handlerInput));
+                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
-                speakOutput = `You have not started a course yet. Please choose a course first!`;
+                speakOutput = "You have not started a course yet. Please choose a course first!";
                 if (persistentAttributes.repromptOutput !== null) {
-                    speakOutput += ' ' + persistentAttributes.repromptOutput;
+                    speakOutput += " " + persistentAttributes.repromptOutput;
                 }
             }
         } else {
-            speakOutput = `I understood that you'd like to resume the previous course. This is not possible right now. `
+            speakOutput = "I understood that you'd like to resume the previous course. This is not possible right now. ";
             if (persistentAttributes.repromptOutput !== null) {
-                speakOutput += ' ' + persistentAttributes.repromptOutput;
+                speakOutput += " " + persistentAttributes.repromptOutput;
             }
         }
         
@@ -195,15 +193,16 @@ const ResumeCourseIntentHandler = {
 
 const YesIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.YesIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent";
     },
     async handle(handlerInput) {
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
-        let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(true, sessionAttributes, persistentAttributes, handlerInput);
+        let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(true, userId, sessionAttributes, persistentAttributes);
         
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
         
@@ -217,15 +216,16 @@ const YesIntentHandler = {
 
 const NoIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.NoIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.NoIntent";
     },
     async handle(handlerInput) {
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
-        let {speakOutput, repromptOutput} = await trainingHandler.handleYesNoIntent(false, sessionAttributes, persistentAttributes, handlerInput);
+        let {speakOutput, repromptOutput} = await trainingHandler.handleYesNoIntent(false, userId, sessionAttributes, persistentAttributes);
         
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
@@ -243,14 +243,12 @@ const NoIntentHandler = {
 
 const NumericAnswerIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'NumericAnswerIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "NumericAnswerIntent";
     },
     async handle(handlerInput) {
         let speakOutput = "Not implemented yet";
         let repromptOutput = null;
-        
-        //const {speakOutput, repromptOutput} = await trainingHandler.handleYesNoIntent(false);
         
         if (repromptOutput === null) {
             repromptOutput = speakOutput;
@@ -262,7 +260,7 @@ const NumericAnswerIntentHandler = {
             .getResponse();
     }
 
-}
+};
 
 // -------------------------------------------------------------------
 // Utility functions
@@ -286,13 +284,13 @@ async function saveAttributes(speakOutput, repromptOutput, sessionAttributes, pe
 // Generic input handlers
 const DeleteDataIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'DeleteDataIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "DeleteDataIntent";
     },
     async handle(handlerInput) {
         await handlerInput.attributesManager.deletePersistentAttributes();
         
-        const speakOutput = 'I have deleted your progress and data. See you next time!';
+        const speakOutput = "I have deleted your progress and data. See you next time!";
         return handlerInput.responseBuilder
             .speak(speakOutput)
             //.reprompt('Was kann ich noch für dich tun?')
@@ -303,8 +301,8 @@ const DeleteDataIntentHandler = {
 
 const HelpIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent";
     },
     handle(handlerInput) {
         // TODO
@@ -319,12 +317,12 @@ const HelpIntentHandler = {
 
 const CancelAndStopIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent'
-                || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.CancelIntent"
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent");
     },
     handle(handlerInput) {
-        const speakOutput = 'Goodbye!';
+        const speakOutput = "Goodbye!";
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .getResponse();
@@ -333,7 +331,7 @@ const CancelAndStopIntentHandler = {
 
 const SessionEndedRequestHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'SessionEndedRequest';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "SessionEndedRequest";
     },
     handle(handlerInput) {
         // Any cleanup logic goes here.
@@ -347,7 +345,7 @@ const SessionEndedRequestHandler = {
 // handler chain below.
 const IntentReflectorHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest";
     },
     handle(handlerInput) {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);

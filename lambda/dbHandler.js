@@ -1,17 +1,18 @@
-'use strict';
-const AWS = require('aws-sdk');
+"use strict";
+const AWS = require("aws-sdk");
 
 // Configure AWS DynamoDB
-AWS.config.update({region: 'eu-west-1'});
-const DB_TABLE_TRAININGS = 'LearningAssistantTrainings';
-const DB_TABLE_QUESTIONS = 'LearningAssistantQuestions';
+AWS.config.update({region: "eu-west-1"});
+const DB_TABLE_TRAININGS = "LearningAssistantTrainings";
+const DB_TABLE_QUESTIONS = "LearningAssistantQuestions";
+const DB_TABLE_ANSWERS = "LearningAssistantAnswers";
 let ddbInstance = null;
 
 
 
 function connectToDb() {
     if (ddbInstance === null) {
-        ddbInstance = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'});
+        ddbInstance = new AWS.DynamoDB.DocumentClient({apiVersion: "2012-08-10"});
     }
     return ddbInstance;
 }
@@ -28,7 +29,7 @@ module.exports.getTrainingList = async function getTrainingList() {
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
     }
-}
+};
 
 module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech() {
     let trainings = await module.exports.getTrainingList();
@@ -39,7 +40,7 @@ module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpe
         trainingNames.push(item.TrainingName);
     });
     return trainingNames.join(", ");
-}
+};
 
 module.exports.getQuestionIdListForTraining = async function getQuestionIdListForTraining(trainingId) {
     const params = {
@@ -63,7 +64,7 @@ module.exports.getQuestionIdListForTraining = async function getQuestionIdListFo
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
     }
-}
+};
 
 module.exports.getQuestion = async function getQuestion(trainingId, questionId) {
     const params = {
@@ -81,4 +82,35 @@ module.exports.getQuestion = async function getQuestion(trainingId, questionId) 
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
     }
-}
+};
+
+module.exports.logAnswerForUser = async function logAnswerForUser(userId, trainingId, questionId, isCorrect) {
+    // Get current value
+    //let updateCount = isCorrect === true ? "CorrectCount" : "WrongCount";
+    const propertyToUpdateName = isCorrect === true ? "CorrectCount" : "WrongCount";
+    const params = {
+        TableName: DB_TABLE_ANSWERS,
+        Key: {
+            "UserTrainingId": `${userId}#${trainingId}`,
+            //"TrainingId": trainingId, 
+            "QuestionId": questionId
+        },
+        //UpdateExpression: "SET my_value = if_not_exists(#counter, :start) + :inc",
+        UpdateExpression: "ADD #counter :increment",
+        ExpressionAttributeNames: {"#counter": propertyToUpdateName},
+        ExpressionAttributeValues: {":increment": 1},
+        ReturnValues: "UPDATED_NEW"
+    };
+    try {
+        const db = connectToDb();
+        const data = await db.update(params).promise();
+        console.log("Updated answer count: " + JSON.stringify(data));
+        return data.Item;
+    } catch (err) {
+        console.log("Error updating answer count in db: " + err.message);
+    }
+};
+
+// module.exports.getAnswersForUser = async function getAnswersForUser(userId, trainingId) {
+
+// };

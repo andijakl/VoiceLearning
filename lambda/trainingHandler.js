@@ -1,6 +1,6 @@
-'use strict';
-const config = require('./config.js');
-const dbHandler = require('./dbHandler.js');
+"use strict";
+const config = require("./config.js");
+const dbHandler = require("./dbHandler.js");
 
 // -------------------------------------------------------------------
 // Active training handler functions
@@ -13,17 +13,20 @@ module.exports.initializeUser = function(sessionAttributes, persistentAttributes
     persistentAttributes.totalQuestionsAsked = 0;
     persistentAttributes.totalCorrectAnswers = 0;
     persistentAttributes.totalWrongAnswers = 0;
+    persistentAttributes.answersForTrainings = {};
     sessionAttributes.state = config.states.STUDENT_NAME;
-}
+};
 
 module.exports.selectTraining = async function selectTraining(userTrainingName, persistentAttributes) {
     // Match user training name from intent slot with available trainings in the DB
     const trainingList = await dbHandler.getTrainingList();
     let foundTraining = null;
+    // TODO: maybe change to for ... of to use break inside of loop?
+    // https://stackoverflow.com/questions/3010840/loop-through-an-array-in-javascript
     trainingList.forEach((item) => {
-        if (item.TrainingName.trim().localeCompare(userTrainingName.trim(), undefined, { sensitivity: 'accent' }) === 0) {
+        if (item.TrainingName.trim().localeCompare(userTrainingName.trim(), undefined, { sensitivity: "accent" }) === 0) {
             // Found a match!
-            console.log(`Found a match! Id: ${item.TrainingId}, name: ${item.TrainingName}`);
+            console.log(`Found a training match! Id: ${item.TrainingId}, name: ${item.TrainingName}`);
             persistentAttributes.currentTrainingId = item.TrainingId;
             persistentAttributes.currentTrainingName = item.TrainingName;
             foundTraining = item;
@@ -32,18 +35,20 @@ module.exports.selectTraining = async function selectTraining(userTrainingName, 
     });
     
     return foundTraining;
-}
+};
 
-module.exports.startNewTraining = async function startNewTraining(sessionAttributes, persistentAttributes, handlerInput) {
+module.exports.startNewTraining = async function startNewTraining(sessionAttributes, persistentAttributes) {
     //console.log("c Persistent attributes: " + JSON.stringify(persistentAttributes));
     persistentAttributes.startedTrainings += 1;
     sessionAttributes.state = config.states.TRAINING;
     sessionAttributes.questionNumber = 0;
     sessionAttributes.score = 0;
-    return await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput);
-}
+    // Get current question list
+    sessionAttributes.questionList = await dbHandler.getQuestionIdListForTraining(persistentAttributes.currentTrainingId);
+    return await getNextQuestion(sessionAttributes, persistentAttributes);
+};
 
-module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, sessionAttributes, persistentAttributes, handlerInput) {
+module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -51,20 +56,20 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, sessi
         // Update attributes
         if (sessionAttributes.questionType !== 1) {
             // We do not expect yes/no for this question type
-            speakOutput = "Your answer " + (isYes ? 'yes' : 'no') + " is not valid for this question. " + sessionAttributes.questionText;
+            speakOutput = "Your answer " + (isYes ? "yes" : "no") + " is not valid for this question. " + sessionAttributes.questionText;
             repromptOutput = sessionAttributes.questionText;
         } else {
             // Repeat what the user said
-            let introOutput = "You said " + (isYes ? 'yes' : 'no') + ". ";
+            let introOutput = "You said " + (isYes ? "yes" : "no") + ". ";
             // Yes/No is a valid answer - check if correct.
-            introOutput += answerIsYesNoCorrect(isYes, sessionAttributes, persistentAttributes);
-            ({speakOutput, repromptOutput} = await getNextQuestion(sessionAttributes, persistentAttributes, handlerInput));
+            introOutput += await answerIsYesNoCorrect(isYes, userId, sessionAttributes, persistentAttributes);
+            ({speakOutput, repromptOutput} = await getNextQuestion(sessionAttributes, persistentAttributes));
             speakOutput = introOutput + " " + speakOutput;
         }
     } else if (sessionAttributes.state === config.states.FINISHED) {
         if (isYes) {
             let introOutput = `Restarting your course ${persistentAttributes.currentTrainingName}`;
-            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(sessionAttributes, persistentAttributes, handlerInput));
+            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(sessionAttributes, persistentAttributes));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             // Finished trainingand user doesn't want to restart
@@ -76,28 +81,28 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, sessi
         // TODO: provide instructions on what to do
         speakOutput = "You are currently not in training mode.";
         if (persistentAttributes.repromptOutput !== null) {
-            speakOutput += ' ' + persistentAttributes.repromptOutput;
+            speakOutput += " " + persistentAttributes.repromptOutput;
         }
     }
 
     return { speakOutput, repromptOutput };
-}
+};
 
 // -------------------------------------------------------------------
 // Private functions
 
-async function getNextQuestion(sessionAttributes, persistentAttributes, handlerInput) {
+async function getNextQuestion(sessionAttributes, persistentAttributes) {
     let speakOutput = null;
     let repromptOutput = null;
 
-    if (sessionAttributes.questionNumber >= 3) {
+    if (sessionAttributes.questionNumber >= config.numQuestionsPerTraining) {
         // Training finished
-        await trainingFinished(sessionAttributes, persistentAttributes, handlerInput);
+        await trainingFinished(sessionAttributes, persistentAttributes);
         speakOutput = `This training session is finished! You got a score of ${sessionAttributes.score}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
-        repromptOutput = `Would you like to train again?`;
+        repromptOutput = "Would you like to train again?";
         speakOutput += " " + repromptOutput;
     } else {
-        ({speakOutput, repromptOutput} = await getQuestionText(sessionAttributes, persistentAttributes, handlerInput));
+        ({speakOutput, repromptOutput} = await getQuestionText(sessionAttributes, persistentAttributes));
     }
 
     return {speakOutput, repromptOutput};
@@ -105,8 +110,8 @@ async function getNextQuestion(sessionAttributes, persistentAttributes, handlerI
 
 
 // Function to retrieve the next question
-async function getQuestionText(sessionAttributes, persistentAttributes, handlerInput) {
-    console.log("I am in getQuestionText()");
+async function getQuestionText(sessionAttributes, persistentAttributes) {
+    //console.log("I am in getQuestionText()");
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -121,7 +126,12 @@ async function getQuestionText(sessionAttributes, persistentAttributes, handlerI
 
     // TODO: hardcoded question for now
     //let questionText = "Is accessibility only important for people with disabilities? Yes or no?";
-    let questionList = await dbHandler.getQuestionIdListForTraining(1);
+
+    // eslint-disable-next-line no-unused-vars
+    //let questionScores = calculateQuestionScores(sessionAttributes, persistentAttributes);
+
+    // Get which questions have been least often answered correctly by the user
+    // Random choice if there are multiple questions with the same number of passes
     let questionData = await dbHandler.getQuestion(1, 2);
 
     // Depending on question type, add possible answers like: "yes or no?"
@@ -141,27 +151,70 @@ async function getQuestionText(sessionAttributes, persistentAttributes, handlerI
     return {speakOutput, repromptOutput};
 }
 
+// eslint-disable-next-line no-unused-vars
+async function calculateQuestionScores(sessionAttributes, persistentAttributes) {
+    // For all questions available for this training, 
+    // calculate how often the user answered correctly minus how often wrong
+    // let questionScores = new Map();
+    // const trainingId = persistentAttributes.currentTrainingId;
+    // sessionAttributes.questionList.forEach((curQuestionId) => {
+    //     // TODO: is there a more elegant operator for this in JavaScript like ?? in C#?
+    //     const correctForQuestion = persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.correctCount`) ?
+    //         persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.correctCount`) :
+    //         0;
+    //     const wrongForQuestion = persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.wrongCount`) ?
+    //         persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${curQuestionId}.wrongCount`) :
+    //         0;
+    //     const curQuestionScore = correctForQuestion - wrongForQuestion;
+    //     questionScores.set(curQuestionId, curQuestionScore);
+    // });
+    //console.log(`Question scores: ${questionScores}`);
+    //return questionScores;
+}
 
-function answerIsYesNoCorrect(answerIsYes, sessionAttributes, persistentAttributes) {
+
+async function answerIsYesNoCorrect(answerIsYes, userId, sessionAttributes, persistentAttributes) {
     if ((sessionAttributes.correctAnswer === 1 && answerIsYes) ||
         (sessionAttributes.correctAnswer === 0 && !answerIsYes)) {
         // Correct
-        return answerCorrect(sessionAttributes, persistentAttributes);
+        return await answerCorrect(userId, sessionAttributes, persistentAttributes);
     } else {
         // Not correct
-        return answerWrong(sessionAttributes, persistentAttributes);
+        return await answerWrong(userId, sessionAttributes, persistentAttributes);
     }
 }
 
-function answerCorrect(sessionAttributes, persistentAttributes) {
+async function answerCorrect(userId, sessionAttributes, persistentAttributes) {
     sessionAttributes.score += 1;
     persistentAttributes.totalCorrectAnswers += 1;
+
+    const trainingId = persistentAttributes.currentTrainingId;
+    const questionId = sessionAttributes.questionId;
+    await dbHandler.logAnswerForUser(userId, trainingId, questionId, true);
+    // if (persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${questionId}.correctCount`)) {
+    //     persistentAttributes.answersForTrainings[trainingId][questionId]["correctCount"] += 1;
+    // } else {
+    //     //persistentAttributes.answersForTrainings[trainingId][questionId]["correctCount"] = 1;
+    //     Object.assign(persistentAttributes.answersForTrainings, [trainingId][questionId]["correctCount"] = 1);
+    //     //persistentAttributes.answersForTrainings = { ... [trainingId][questionId]["correctCount"] = 1;
+    // }
+
     let speakText = "Congratulations, the answer is correct!";
     return speakText;
 }
 
-function answerWrong(sessionAttributes, persistentAttributes) {
+async function answerWrong(userId, sessionAttributes, persistentAttributes) {
     persistentAttributes.totalWrongAnswers += 1;
+
+    const trainingId = persistentAttributes.currentTrainingId;
+    const questionId = sessionAttributes.questionId;
+    await dbHandler.logAnswerForUser(userId, trainingId, questionId, false);
+    // if (persistentAttributes.answersForTrainings.hasOwnProperty.call(`${trainingId}.${questionId}.wrongCount`)) {
+    //     persistentAttributes.answersForTrainings[trainingId][questionId]["wrongCount"] += 1;
+    // } else {
+    //     persistentAttributes.answersForTrainings[trainingId][questionId]["wrongCount"] = 1;
+    // }
+
     let speakText = "Sorry, your answer was wrong.";
     return speakText;
 }
@@ -171,29 +224,29 @@ function answerWrong(sessionAttributes, persistentAttributes) {
 // -------------------------------------------------------------------
 // Training state handler functions
 
-async function trainingFinished(sessionAttributes, persistentAttributes, handlerInput) {
+async function trainingFinished(sessionAttributes, persistentAttributes) {
     sessionAttributes.state = config.states.FINISHED;
     persistentAttributes.finishedTrainings += 1;
 }
 
 
 // -------------------------------------------------------------------
-// Custom utility functions
-function getRandom(min, max) {
-    return Math.floor((Math.random() * ((max - min) + 1)) + min);
-  }
+// // Custom utility functions
+// function getRandom(min, max) {
+//     return Math.floor((Math.random() * ((max - min) + 1)) + min);
+// }
   
 
-// This function takes the contents of an array and randomly shuffles it.
-function shuffle(array) {
-    let currentIndex = array.length, temporaryValue, randomIndex;
+// // This function takes the contents of an array and randomly shuffles it.
+// function shuffle(array) {
+//     let currentIndex = array.length, temporaryValue, randomIndex;
   
-    while ( 0 !== currentIndex ) {
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
-      temporaryValue = array[currentIndex];
-      array[currentIndex] = array[randomIndex];
-      array[randomIndex] = temporaryValue;
-    }
-    return array;
-  }
+//     while ( 0 !== currentIndex ) {
+//       randomIndex = Math.floor(Math.random() * currentIndex);
+//       currentIndex--;
+//       temporaryValue = array[currentIndex];
+//       array[currentIndex] = array[randomIndex];
+//       array[randomIndex] = temporaryValue;
+//     }
+//     return array;
+// }
