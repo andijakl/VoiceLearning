@@ -23,7 +23,7 @@ module.exports.getTrainingList = async function getTrainingList() {
     try {
         const db = connectToDb();
         const data = await db.scan(params).promise();
-        //console.log("db get success!: " + JSON.stringify(data));
+        console.log("db getTrainingList: " + JSON.stringify(data.Items));
         return data.Items;
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
@@ -35,14 +35,13 @@ module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpe
     //console.log("got trainings: " + JSON.stringify(trainings));
     // Well, I'm sure there is some more elegant alternative for this in JS.
     let trainingNames = [];
-    //for (let item in trainings) {
     trainings.forEach((item) => {
         trainingNames.push(item.TrainingName);
     });
     return trainingNames.join(", ");
 }
 
-module.exports.getQuestionListForTraining = async function getQuestionListForTraining(trainingId) {
+module.exports.getQuestionIdListForTraining = async function getQuestionIdListForTraining(trainingId) {
     const params = {
         TableName: DB_TABLE_QUESTIONS,
         "KeyConditionExpression": "TrainingId = :tid",
@@ -51,25 +50,22 @@ module.exports.getQuestionListForTraining = async function getQuestionListForTra
         },
         "ProjectionExpression": "QuestionId"
     };
-    // TODO: might need to update params for DocumentClient interface
     try {
         const db = connectToDb();
         const data = await db.query(params).promise();
-        console.log("Got question list: " + JSON.stringify(data));
-        return data.Items;
+        //console.log("Got question list: " + JSON.stringify(data));
+        let questionIdList = [];
+        data.Items.forEach((item) => {
+            questionIdList.push(item.QuestionId);
+        });
+        //console.log("Extracted question IDs: " + questionIdList);
+        return questionIdList;
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
     }
 }
 
 module.exports.getQuestion = async function getQuestion(trainingId, questionId) {
-    // const params = {
-    //     TableName: DB_TABLE_QUESTIONS,
-    //     Key: {
-    //         "TrainingId": {"N": trainingId}, 
-    //         "QuestionId": {"N": questionId}
-    //     }, 
-    // };
     const params = {
         TableName: DB_TABLE_QUESTIONS,
         Key: {

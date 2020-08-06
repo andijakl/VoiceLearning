@@ -6,7 +6,8 @@ const dbHandler = require('./dbHandler.js');
 // Active training handler functions
 
 module.exports.initializeUser = function(sessionAttributes, persistentAttributes) {
-    persistentAttributes.currentCourse = null;
+    persistentAttributes.currentTrainingId = null;
+    persistentAttributes.currentTrainingName = null;
     persistentAttributes.startedTrainings = 0;
     persistentAttributes.finishedTrainings = 0;
     persistentAttributes.totalQuestionsAsked = 0;
@@ -15,7 +16,26 @@ module.exports.initializeUser = function(sessionAttributes, persistentAttributes
     sessionAttributes.state = config.states.STUDENT_NAME;
 }
 
-module.exports.startNewCourse = async function startNewCourse(sessionAttributes, persistentAttributes, handlerInput) {
+module.exports.selectTraining = async function selectTraining(userTrainingName, persistentAttributes) {
+    // Match user training name from intent slot with available trainings in the DB
+    const trainingList = await dbHandler.getTrainingList();
+    let foundTraining = null;
+    trainingList.forEach((item) => {
+        if (item.TrainingName.trim().localeCompare(userTrainingName.trim(), undefined, { sensitivity: 'accent' }) === 0) {
+            // Found a match!
+            console.log(`Found a match! Id: ${item.TrainingId}, name: ${item.TrainingName}`);
+            persistentAttributes.currentTrainingId = item.TrainingId;
+            persistentAttributes.currentTrainingName = item.TrainingName;
+            foundTraining = item;
+            // Note: return inside forEach doesn't exit the loop - would need to switch to other loop type!
+        }
+    });
+    
+    return foundTraining;
+}
+
+module.exports.startNewTraining = async function startNewTraining(sessionAttributes, persistentAttributes, handlerInput) {
+    //console.log("c Persistent attributes: " + JSON.stringify(persistentAttributes));
     persistentAttributes.startedTrainings += 1;
     sessionAttributes.state = config.states.TRAINING;
     sessionAttributes.questionNumber = 0;
@@ -43,8 +63,8 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, sessi
         }
     } else if (sessionAttributes.state === config.states.FINISHED) {
         if (isYes) {
-            let introOutput = `Restarting your course ${persistentAttributes.currentCourse}`;
-            ({speakOutput, repromptOutput} = await module.exports.startNewCourse(sessionAttributes, persistentAttributes, handlerInput));
+            let introOutput = `Restarting your course ${persistentAttributes.currentTrainingName}`;
+            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(sessionAttributes, persistentAttributes, handlerInput));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             // Finished trainingand user doesn't want to restart
@@ -101,11 +121,13 @@ async function getQuestionText(sessionAttributes, persistentAttributes, handlerI
 
     // TODO: hardcoded question for now
     //let questionText = "Is accessibility only important for people with disabilities? Yes or no?";
-    let questionList = await dbHandler.getQuestionListForTraining(1);
-    const questionData = await dbHandler.getQuestion(1, 2);
-    // Depending on question type, add "yes or no?"
+    let questionList = await dbHandler.getQuestionIdListForTraining(1);
+    let questionData = await dbHandler.getQuestion(1, 2);
 
-    console.log("Question text: " + sessionAttributes.questionText);
+    // Depending on question type, add possible answers like: "yes or no?"
+    if (questionData.QuestionType === 1) {
+        questionData.QuestionText += " Yes or no?";
+    }
 
     // Store new question data
     sessionAttributes.questionId = questionData.QuestionId;
@@ -148,9 +170,6 @@ function answerWrong(sessionAttributes, persistentAttributes) {
 
 // -------------------------------------------------------------------
 // Training state handler functions
-function getJsonForCourse(courseName, sessionAttributes) {
-    return "data/" + sessionAttributes.courseName + ".json";
-}
 
 async function trainingFinished(sessionAttributes, persistentAttributes, handlerInput) {
     sessionAttributes.state = config.states.FINISHED;

@@ -90,9 +90,9 @@ const StudentNameIntentHandler = {
             sessionAttributes.state = config.states.CHOOSE_COURSE;
             persistentAttributes.studentName = studentName;
             
-            const availableCourses = await dbHandler.getTrainingNamesForSpeech();
-            speakOutput = `Hi ${studentName}. I'm happy to help you with learning for your courses. I have content for these courses: ${availableCourses}. Which course should I start?`;
-            repromptOutput = 'Please choose one of these courses: ' + availableCourses;
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+            speakOutput = `Hi ${studentName}. I'm happy to help you with learning for your courses. I have content for these courses: ${availableTrainings}. Which course should I start?`;
+            repromptOutput = 'Please choose one of these courses: ' + availableTrainings;
         }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
@@ -111,22 +111,31 @@ const ChooseCourseIntentHandler = {
     },
     async handle(handlerInput) {
         // Get Slots
-        let course = Alexa.getSlotValue(handlerInput.requestEnvelope, 'course');
+        let userTrainingName = Alexa.getSlotValue(handlerInput.requestEnvelope, 'course');
+        
+        let speakOutput = null;
+        let repromptOutput = null;
 
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
         // TODO: match slot value with available courses and get its ID from the DB
+        //console.log("a Persistent attributes: " + JSON.stringify(persistentAttributes));
+        const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes);
+        if (selectedTrainingInfo !== null) {
+            // Training selected successfully
+            let introOutput = `You chose the course: ${persistentAttributes.currentTrainingName}. Let's get started! `;
+            //console.log("b Persistent attributes: " + JSON.stringify(persistentAttributes));
+            // Get question
+            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes, handlerInput));
+            speakOutput = introOutput + " " + speakOutput;
+        } else {
+            // Unable to match slot to training in DB
+            //console.log("x Persistent attributes: " + JSON.stringify(persistentAttributes));
+            speakOutput = `Sorry, I was unable to match your selection ${userTrainingName} to any of the available trainings. Please try again or contact the skill administrators!`;
+        }
 
-        let introOutput = `You chose the course: ${course}. Let's get started! `;
-
-        // Update attributes
-        persistentAttributes.currentCourse = course;
-        
-        // Get question
-        let {speakOutput, repromptOutput} = await trainingHandler.startNewCourse(sessionAttributes, persistentAttributes, handlerInput);
-        speakOutput = introOutput + " " + speakOutput;
         
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
@@ -153,10 +162,10 @@ const ResumeCourseIntentHandler = {
 
         if (sessionAttributes.state === config.states.CHOOSE_COURSE)
         {
-            if (persistentAttributes.currentCourse !== null) {
+            if (persistentAttributes.currentTrainingName !== null) {
                 // Able to resume
-                let introOutput = `Resuming course ${persistentAttributes.currentCourse}.`;
-                ({speakOutput, repromptOutput} = await trainingHandler.startNewCourse(sessionAttributes, persistentAttributes, handlerInput));
+                let introOutput = `Resuming course ${persistentAttributes.currentTrainingName}.`;
+                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(sessionAttributes, persistentAttributes, handlerInput));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 speakOutput = `You have not started a course yet. Please choose a course first!`;
