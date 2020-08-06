@@ -119,6 +119,7 @@ module.exports.getAnswersForUser = async function getAnswersForUser(userId, trai
             ":utid": `${userId}#${trainingId}`
         },
         //"ProjectionExpression": "QuestionId"
+        // TODO: remove retrieving UserTrainingId from returned objects to save data!
     };
     try {
         const db = connectToDb();

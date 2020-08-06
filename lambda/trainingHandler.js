@@ -132,7 +132,7 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
     // Get which questions have been least often answered correctly by the user
     // Random choice if there are multiple questions with the same number of passes
     //let questionData = await dbHandler.getQuestion(1, 2);
-    let questionData = await getBestNextNextQuestion(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList);
+    let questionData = await getBestNextNextQuestion(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList, sessionAttributes);
 
     // Depending on question type, add possible answers like: "yes or no?"
     if (questionData.QuestionType === 1) {
@@ -151,7 +151,7 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
     return {speakOutput, repromptOutput};
 }
 
-async function getBestNextNextQuestion(userId, trainingId, completeQuestionList) {
+async function getBestNextNextQuestion(userId, trainingId, completeQuestionList, sessionAttributes) {
     const sortedQuestionScores = await calculateQuestionScores(userId, trainingId, completeQuestionList);
     // TODO: check if we have questions left!
     // Take first (= best) question
@@ -170,8 +170,12 @@ async function calculateQuestionScores(userId, trainingId, completeQuestionList)
 
     // Loop over user answers and calculate score for each question
     answerList.forEach(item => {
-        const correctCount = item.hasOwnProperty.call("CorrectCount") ? item.CorrectCount : 0;
-        const wrongCount = item.hasOwnProperty.call("WrongCount") ? item.WrongCount : 0;
+        // console.log("item data: " + item);
+        // console.log("has CorrectCount 1: " + Object.prototype.hasOwnProperty.call(item, "CorrectCount"));
+        // console.log("has CorrectCount 2: " + ("CorrectCount" in item));
+        // console.log("item.CorrectCount" + item.CorrectCount);
+        const correctCount = Object.prototype.hasOwnProperty.call(item, "CorrectCount") ? item.CorrectCount : 0;
+        const wrongCount = Object.prototype.hasOwnProperty.call(item, "WrongCount") ? item.WrongCount : 0;
         questionScores.set(item.QuestionId, correctCount - wrongCount);
     });
     console.log("questionScores: " + questionScores);
