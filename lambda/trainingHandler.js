@@ -43,6 +43,7 @@ module.exports.startNewTraining = async function startNewTraining(userId, sessio
     sessionAttributes.state = config.states.TRAINING;
     sessionAttributes.questionNumber = 0;
     sessionAttributes.score = 0;
+    sessionAttributes.questionsAskedThisSession = [];
     // Get current question list
     sessionAttributes.questionList = await dbHandler.getQuestionIdListForTraining(persistentAttributes.currentTrainingId);
     return await getNextQuestion(userId, sessionAttributes, persistentAttributes);
@@ -98,7 +99,7 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes) 
     if (sessionAttributes.questionNumber >= config.numQuestionsPerTraining) {
         // Training finished
         await trainingFinished(sessionAttributes, persistentAttributes);
-        speakOutput = `This training session is finished! You got a score of ${sessionAttributes.score}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
+        speakOutput = `This training session is finished! You got a score of ${sessionAttributes.score} out of ${sessionAttributes.questionNumber}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
         repromptOutput = "Would you like to train again?";
         speakOutput += " " + repromptOutput;
     } else {
@@ -114,57 +115,66 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
     let speakOutput = null;
     let repromptOutput = null;
 
-    // Update session variables
-    sessionAttributes.questionNumber += 1;
-    persistentAttributes.totalQuestionsAsked += 1;
+    // Get best question to ask the user,
+    // considering questions already asked this session as well as the 
+    // overall correct/wrong ratio of questions in this training.
+    let questionData = await getBestNextQuestion(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList, sessionAttributes.questionsAskedThisSession);
 
-    // Get question text
-    //const random = getRandom(0, data.length - 1);
-    //const questionDb = require(jsonFilePath);
-    const introText = `Question number ${sessionAttributes.questionNumber}: `;
+    if (questionData === null) {
+        // No question left to ask
+        // Training finished
+        await trainingFinished(sessionAttributes, persistentAttributes);
+        speakOutput = `This training session is finished! You got a score of ${sessionAttributes.score} out of ${sessionAttributes.questionNumber}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
+        repromptOutput = "Would you like to train again?";
+        speakOutput += " " + repromptOutput;
+    } else {
+        // Update session variables
+        sessionAttributes.questionNumber += 1;
+        persistentAttributes.totalQuestionsAsked += 1;
+    
+        // Get question text
+        //const random = getRandom(0, data.length - 1);
+        //const questionDb = require(jsonFilePath);
+        const introText = `Question number ${sessionAttributes.questionNumber}: `;
 
-    // TODO: hardcoded question for now
-    //let questionText = "Is accessibility only important for people with disabilities? Yes or no?";
-
-    // eslint-disable-next-line no-unused-vars
-    //let questionScores = await calculateQuestionScores(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList);
-
-    // Get which questions have been least often answered correctly by the user
-    // Random choice if there are multiple questions with the same number of passes
-    //let questionData = await dbHandler.getQuestion(1, 2);
-    let questionData = await getBestNextNextQuestion(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList, sessionAttributes);
-
-    // Depending on question type, add possible answers like: "yes or no?"
-    if (questionData.QuestionType === 1) {
-        questionData.QuestionText += " Yes or no?";
+        // Depending on question type, add possible answers like: "yes or no?"
+        if (questionData.QuestionType === 1) {
+            questionData.QuestionText += " Yes or no?";
+        }
+    
+        // Store new question data
+        sessionAttributes.questionId = questionData.QuestionId;
+        sessionAttributes.questionType = questionData.QuestionType;
+        sessionAttributes.correctAnswer = questionData.CorrectAnswer;
+        sessionAttributes.questionText = questionData.QuestionText;
+        sessionAttributes.questionsAskedThisSession.push(questionData.QuestionId);
+    
+        speakOutput = introText + sessionAttributes.questionText;
+        repromptOutput = sessionAttributes.questionText;
     }
-
-    // Store new question data
-    sessionAttributes.questionId = questionData.QuestionId;
-    sessionAttributes.questionType = questionData.QuestionType;
-    sessionAttributes.correctAnswer = questionData.CorrectAnswer;
-    sessionAttributes.questionText = questionData.QuestionText;
-
-    speakOutput = introText + sessionAttributes.questionText;
-    repromptOutput = sessionAttributes.questionText;
 
     return {speakOutput, repromptOutput};
 }
 
-async function getBestNextNextQuestion(userId, trainingId, completeQuestionList, sessionAttributes) {
-    const sortedQuestionScores = await calculateQuestionScores(userId, trainingId, completeQuestionList);
-    // TODO: check if we have questions left!
-    // Take first (= best) question
-    const topQuestion = sortedQuestionScores.entries().next().value;
-    console.log("Top question ID: " + topQuestion[0] + ", score: " + topQuestion[1]);
-    // Get data for this question
-    let questionData = await dbHandler.getQuestion(trainingId, topQuestion[0]);
-    console.log("Question data: " + questionData);
-    return questionData;
+async function getBestNextQuestion(userId, trainingId, completeQuestionList, questionsAskedThisSession) {
+    const sortedQuestionScores = await calculateQuestionScores(userId, trainingId, completeQuestionList, questionsAskedThisSession);
+    // Check if we have questions left!
+    if (sortedQuestionScores.size > 0) {
+        // Take first (= best) question
+        const topQuestion = sortedQuestionScores.entries().next().value;
+        //console.log("Top question ID: " + topQuestion[0] + ", score: " + topQuestion[1]);
+        // Get data for this question
+        let questionData = await dbHandler.getQuestion(trainingId, topQuestion[0]);
+        console.log("Question data: " + questionData);
+        return questionData;
+    } else {
+        // No question left to ask
+        return null;
+    }
 }
 
 // eslint-disable-next-line no-unused-vars
-async function calculateQuestionScores(userId, trainingId, completeQuestionList) {
+async function calculateQuestionScores(userId, trainingId, completeQuestionList, questionsAskedThisSession) {
     const answerList = await dbHandler.getAnswersForUser(userId, trainingId);
     let questionScores = new Map();
 
@@ -196,7 +206,13 @@ async function calculateQuestionScores(userId, trainingId, completeQuestionList)
         console.log("key is " + key + ", value is " + value);
     }
 
-    // TODO: keep session question list so that the same question isn't asked twice in a session!
+    // Check session question list so that the same question isn't asked twice in a session!
+    if (questionsAskedThisSession !== null) {
+        questionsAskedThisSession.forEach(item => {
+            let removed = questionScores.delete(item);
+            console.log("Removed already asked entry: " + removed.key + " - " + removed.value);
+        });
+    }
 
     const questionScoresSorted = new Map([...questionScores.entries()].sort((a, b) => a[1] - b[1]));
     console.log("Sorted question scores: " + questionScoresSorted);

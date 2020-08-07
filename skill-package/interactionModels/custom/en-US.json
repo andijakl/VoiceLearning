@@ -102,6 +102,24 @@
             "Forget my data",
             "Delete my data"
           ]
+        },
+        {
+          "name": "ListCoursesIntent",
+          "slots": [],
+          "samples": [
+            "Please start another tranining",
+            "Please start another course",
+            "I would like to start another course",
+            "Start another training",
+            "Start another course",
+            "What trainings can i do",
+            "Which trainings are available",
+            "What can I do",
+            "Which courses can I do",
+            "Which trainings can I do",
+            "Which trainings do you have",
+            "Which courses are available"
+          ]
         }
       ],
       "types": [
@@ -112,6 +130,8 @@
               "name": {
                 "value": "3D Visualization",
                 "synonyms": [
+                  "visualisation",
+                  "visualization",
                   "Graphics",
                   "Visualization",
                   "Three Dee Graphics",
@@ -136,5 +156,5 @@
       ]
     }
   },
-  "version": "6"
+  "version": "7"
 }

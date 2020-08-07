@@ -113,8 +113,10 @@ const ChooseCourseIntentHandler = {
     },
     async handle(handlerInput) {
         // Get Slots
-        let userTrainingName = Alexa.getSlotValue(handlerInput.requestEnvelope, "course");
-        
+        const trainingNameSlot = Alexa.getSlot(handlerInput.requestEnvelope, "course");
+        // Get actual main slot value, not the spoken synonym
+        const userTrainingName = getCanonicalSlot(trainingNameSlot);
+
         let speakOutput = null;
         let repromptOutput = null;
 
@@ -123,17 +125,29 @@ const ChooseCourseIntentHandler = {
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
-        // Match slot value with available courses and get its ID from the DB
-        const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes);
-        if (selectedTrainingInfo !== null) {
-            // Training selected successfully
-            let introOutput = `You chose the course: ${persistentAttributes.currentTrainingName}. Let's get started! `;
-            // Get question
-            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes));
-            speakOutput = introOutput + " " + speakOutput;
+        console.log("User selected training: " + userTrainingName);
+
+        if (userTrainingName === undefined || userTrainingName === null) {
+            speakOutput = "Sorry, I did not get which course you would like to start. Please try again!";
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+            repromptOutput = "Please choose one of these courses: " + availableTrainings;
+            speakOutput += " " + repromptOutput;
         } else {
-            // Unable to match slot to training in DB
-            speakOutput = `Sorry, I was unable to match your selection ${userTrainingName} to any of the available trainings. Please try again or contact the skill administrators!`;
+            // Match slot value with available courses and get its ID from the DB
+            const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes);
+            if (selectedTrainingInfo !== null) {
+                // Training selected successfully
+                let introOutput = `You chose the course: ${persistentAttributes.currentTrainingName}. Let's get started! `;
+                // Get question
+                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes));
+                speakOutput = introOutput + " " + speakOutput;
+            } else {
+                // Unable to match slot to training in DB
+                speakOutput = `Sorry, I was unable to match your selection ${userTrainingName} to any of the available trainings. Please try again or contact the skill administrators!`;
+                const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+                repromptOutput = "Please choose one of these courses: " + availableTrainings;
+                speakOutput += " " + repromptOutput;
+            }
         }
 
         
@@ -146,6 +160,32 @@ const ChooseCourseIntentHandler = {
     }
 };
 
+const ListCoursesIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ListCoursesIntent";
+    },
+    async handle(handlerInput) {
+        let speakOutput = null;
+        let repromptOutput = null;
+
+        // Get attributes
+        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+   
+        const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+        speakOutput = `You can choose one of these available courses: ${availableTrainings}. `;
+
+        // Keep reprompt output from previous question
+        repromptOutput = persistentAttributes.repromptOutput;
+
+        speakOutput += " " + repromptOutput;
+        
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(repromptOutput)
+            .getResponse();
+    }
+};
 
 const ResumeCourseIntentHandler = {
     canHandle(handlerInput) {
@@ -282,6 +322,17 @@ async function saveAttributes(speakOutput, repromptOutput, sessionAttributes, pe
     return repromptOutput;
 }
 
+// Get the "original" slot value, not the actual spoken synonym
+// From: https://stackoverflow.com/questions/59569514/how-do-i-get-the-canonical-slot-value-out-of-an-alexa-request
+const getCanonicalSlot = (slot) => {
+    if (slot.resolutions && slot.resolutions.resolutionsPerAuthority.length) {
+        for (let resolution of slot.resolutions.resolutionsPerAuthority) {
+            if (resolution.status && resolution.status.code === "ER_SUCCESS_MATCH") {
+                return resolution.values[0].value.name;
+            }
+        }
+    }
+};
   
 // -------------------------------------------------------------------
 // Generic input handlers
@@ -386,6 +437,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         // Config
         StudentNameIntentHandler,
         ChooseCourseIntentHandler,
+        ListCoursesIntentHandler,
         ResumeCourseIntentHandler,
         // Training
         NumericAnswerIntentHandler,
