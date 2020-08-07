@@ -314,30 +314,22 @@ const NumericAnswerIntentHandler = {
             && sessionAttributes.state == config.states.TRAINING;
     },
     async handle(handlerInput) {
-        console.log("in NumericAnswerIntentHandler");
-
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
         const numericAnswer = Alexa.getSlotValue(handlerInput.requestEnvelope, "numericAnswer");
 
-        
-        console.log("User answer: " + numericAnswer);
-
         let {speakOutput, repromptOutput} = await trainingHandler.handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes);
         
-        console.log("Saving attributes...");
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
         if (repromptOutput === -1) {
             // Stop the skill
-            console.log("Reprompt is -1. Speak is: " + speakOutput);
             return CancelAndStopIntentHandler.handle(handlerInput);
         }
 
-        console.log("SpeakOutput: " + speakOutput);
         
         return handlerInput.responseBuilder
             .speak(speakOutput)

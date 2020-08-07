@@ -94,31 +94,27 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
     let repromptOutput = null;
 
     if (sessionAttributes.state === config.states.TRAINING) {
-        console.log("In training state");
         // Update attributes
         if (sessionAttributes.questionType !== config.questionType.NUMERIC) {
             // We do not expect yes/no for this question type
-            console.log("Invalid answer, not expecting numeric!");
             speakOutput = `Your answer ${numericAnswer} is not valid for this question. ${sessionAttributes.questionText}`;
             repromptOutput = sessionAttributes.questionText;
         } else {
             // Repeat what the user said
-            const answerText = getTextForPossibleAnswer(numericAnswer, sessionAttributes.possibleAnswers);
+            const answerAsInt = parseInt(numericAnswer);
+            const answerText = getTextForPossibleAnswer(answerAsInt, sessionAttributes.possibleAnswers);
             if (answerText !== undefined && answerText !== null) {
-                console.log("got answer text: " + answerText);
-                let introOutput = `You chose answer ${numericAnswer}: ${answerText}. `;
-                introOutput += await answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes);
+                let introOutput = `You chose answer ${answerAsInt}: ${answerText}. `;
+                introOutput += await answerIsNumericCorrect(answerAsInt, userId, sessionAttributes, persistentAttributes);
                 ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
-                console.log("Invalid answer, not possible number!");
-                speakOutput = `You chose answer ${numericAnswer}, but this is not valid for this question. ${sessionAttributes.questionText}`;
+                speakOutput = `You chose answer ${answerAsInt}, but this is not valid for this question. ${sessionAttributes.questionText}`;
                 repromptOutput = sessionAttributes.questionText;
             }
         }
     } else {
         // Not in training
-        console.log("NOt in training!");
         // TODO: provide instructions on what to do
         speakOutput = "You are currently not in training mode.";
         if (persistentAttributes.repromptOutput !== null) {
@@ -284,7 +280,7 @@ async function calculateQuestionScores(userId, trainingId, completeQuestionList,
 }
 
 async function answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes) {
-    if (sessionAttributes.correctAnswer === (numericAnswer - 1)) {
+    if (sessionAttributes.correctAnswer === numericAnswer) {
         // Correct
         return await answerCorrect(userId, sessionAttributes, persistentAttributes);
     } else {
