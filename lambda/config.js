@@ -6,5 +6,9 @@ module.exports = {
         TRAINING: "_TRAINING",
         FINISHED: "_FINISHED",
     },
+    questionType: {
+        YES_NO:  1,
+        NUMERIC: 2
+    },
     numQuestionsPerTraining: 3
 };

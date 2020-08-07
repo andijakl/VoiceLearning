@@ -86,6 +86,7 @@ const StudentNameIntentHandler = {
             speakOutput = "I understood a name, but did not expect that. Please repeat what you wanted to say in case I misunderstood you.";
             if (persistentAttributes.repromptOutput !== null) {
                 speakOutput += " " + persistentAttributes.repromptOutput;
+                repromptOutput = persistentAttributes.repromptOutput;
             }
         } else {
             // Update attributes
@@ -212,12 +213,14 @@ const ResumeCourseIntentHandler = {
                 speakOutput = "You have not started a course yet. Please choose a course first!";
                 if (persistentAttributes.repromptOutput !== null) {
                     speakOutput += " " + persistentAttributes.repromptOutput;
+                    repromptOutput = persistentAttributes.repromptOutput;
                 }
             }
         } else {
             speakOutput = "I understood that you'd like to resume the previous course. This is not possible right now. ";
             if (persistentAttributes.repromptOutput !== null) {
                 speakOutput += " " + persistentAttributes.repromptOutput;
+                repromptOutput = persistentAttributes.repromptOutput;
             }
         }
         
@@ -290,11 +293,19 @@ const NumericAnswerIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === "NumericAnswerIntent";
     },
     async handle(handlerInput) {
-        let speakOutput = "Not implemented yet";
-        let repromptOutput = null;
+        // Get attributes
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
+        const numericAnswer = Alexa.getSlotValue(handlerInput.requestEnvelope, "numericAnswer");
+
+        let {speakOutput, repromptOutput} = await trainingHandler.handleNumericInput(numericAnswer, userId, sessionAttributes, persistentAttributes);
         
-        if (repromptOutput === null) {
-            repromptOutput = speakOutput;
+        repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+
+        if (repromptOutput === -1) {
+            // Stop the skill
+            return CancelAndStopIntentHandler.handle(handlerInput);
         }
         
         return handlerInput.responseBuilder

@@ -55,7 +55,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
 
     if (sessionAttributes.state === config.states.TRAINING) {
         // Update attributes
-        if (sessionAttributes.questionType !== 1) {
+        if (sessionAttributes.questionType !== config.questionType.YES_NO) {
             // We do not expect yes/no for this question type
             speakOutput = "Your answer " + (isYes ? "yes" : "no") + " is not valid for this question. " + sessionAttributes.questionText;
             repromptOutput = sessionAttributes.questionText;
@@ -76,6 +76,36 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
             // Finished trainingand user doesn't want to restart
             speakOutput = "Thanks for training today. I hope I was able to help. Good bye!";
             repromptOutput = -1;
+        }
+    } else {
+        // Not in training
+        // TODO: provide instructions on what to do
+        speakOutput = "You are currently not in training mode.";
+        if (persistentAttributes.repromptOutput !== null) {
+            speakOutput += " " + persistentAttributes.repromptOutput;
+        }
+    }
+
+    return { speakOutput, repromptOutput };
+};
+
+module.exports.handleNumericIntent = async function handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes) {
+    let speakOutput = null;
+    let repromptOutput = null;
+
+    if (sessionAttributes.state === config.states.TRAINING) {
+        // Update attributes
+        if (sessionAttributes.questionType !== config.questionType.NUMERIC) {
+            // We do not expect yes/no for this question type
+            speakOutput = `Your answer ${numericAnswer} is not valid for this question. ${sessionAttributes.questionText}`;
+            repromptOutput = sessionAttributes.questionText;
+        } else {
+            // Repeat what the user said
+            let introOutput = `You chose answer ${numericAnswer}`;
+            // Yes/No is a valid answer - check if correct.
+            introOutput += await answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes);
+            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes));
+            speakOutput = introOutput + " " + speakOutput;
         }
     } else {
         // Not in training
@@ -124,7 +154,7 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
         // No question left to ask
         // Training finished
         await trainingFinished(sessionAttributes, persistentAttributes);
-        speakOutput = `This training session is finished! You got a score of ${sessionAttributes.score} out of ${sessionAttributes.questionNumber}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
+        speakOutput = `I don't have any further questions for you right now. This training session is finished! You got a score of ${sessionAttributes.score} out of ${sessionAttributes.questionNumber}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
         repromptOutput = "Would you like to train again?";
         speakOutput += " " + repromptOutput;
     } else {
@@ -137,9 +167,13 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
         //const questionDb = require(jsonFilePath);
         const introText = `Question number ${sessionAttributes.questionNumber}: `;
 
-        // Depending on question type, add possible answers like: "yes or no?"
-        if (questionData.QuestionType === 1) {
+        // Depending on question type, modify the text for better speech output
+        if (questionData.QuestionType === config.questionType.YES_NO) {
+            // add possible answers like: "yes or no?"
             questionData.QuestionText += " Yes or no?";
+        } else if (questionData.QuestionType === config.questionType.NUMERIC) {
+            // Parse possible answers
+            questionData.QuestionText += convertPossibleAnswersForSpeech(questionData.PossibleAnswers);
         }
     
         // Store new question data
@@ -147,6 +181,7 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
         sessionAttributes.questionType = questionData.QuestionType;
         sessionAttributes.correctAnswer = questionData.CorrectAnswer;
         sessionAttributes.questionText = questionData.QuestionText;
+        sessionAttributes.possibleAnswers = questionData.PossibleAnswers;
         sessionAttributes.questionsAskedThisSession.push(questionData.QuestionId);
     
         speakOutput = introText + sessionAttributes.questionText;
@@ -154,6 +189,17 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
     }
 
     return {speakOutput, repromptOutput};
+}
+
+function convertPossibleAnswersForSpeech(possibleAnswersFromDb) {
+    const possibleAnswers = possibleAnswersFromDb.split("|");
+    let speakText = "";
+    for (const [i, curAnswerText] of possibleAnswers.entries()) {
+        speakText += (i > 0) ? ", " : " ";
+        speakText += `${i+1}: ${curAnswerText}`;
+    }
+    speakText += ".";
+    return speakText;
 }
 
 async function getBestNextQuestion(userId, trainingId, completeQuestionList, questionsAskedThisSession) {
@@ -223,6 +269,15 @@ async function calculateQuestionScores(userId, trainingId, completeQuestionList,
     return questionScoresSorted;
 }
 
+async function answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes) {
+    if (sessionAttributes.correctAnswer === numericAnswer) {
+        // Correct
+        return await answerCorrect(userId, sessionAttributes, persistentAttributes);
+    } else {
+        // Not correct
+        return await answerWrong(userId, sessionAttributes, persistentAttributes);
+    }
+}
 
 async function answerIsYesNoCorrect(answerIsYes, userId, sessionAttributes, persistentAttributes) {
     if ((sessionAttributes.correctAnswer === 1 && answerIsYes) ||
