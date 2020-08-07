@@ -66,8 +66,11 @@ const LaunchRequestHandler = {
 
 const StudentNameIntentHandler = {
     canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "StudentNameIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "StudentNameIntent"
+            //&& Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED"
+            && sessionAttributes.state == config.states.STUDENT_NAME;
     },
     async handle(handlerInput) {
         // Get Slots
@@ -109,8 +112,10 @@ const StudentNameIntentHandler = {
 
 const ChooseCourseIntentHandler = {
     canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ChooseCourseIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ChooseCourseIntent"
+            && sessionAttributes.state == config.states.CHOOSE_COURSE;
     },
     async handle(handlerInput) {
         // Get Slots
@@ -163,8 +168,10 @@ const ChooseCourseIntentHandler = {
 
 const ListCoursesIntentHandler = {
     canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ListCoursesIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ListCoursesIntent"
+            && sessionAttributes.state !== config.states.TRAINING;
     },
     async handle(handlerInput) {
         let speakOutput = null;
@@ -190,8 +197,11 @@ const ListCoursesIntentHandler = {
 
 const ResumeCourseIntentHandler = {
     canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ResumeCourseIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "ResumeCourseIntent"
+            && (sessionAttributes.state == config.states.CHOOSE_COURSE
+                || sessionAttributes.state == config.states.FINISHED);
     },
     async handle(handlerInput) {
         let speakOutput = null;
@@ -237,18 +247,24 @@ const ResumeCourseIntentHandler = {
 // -------------------------------------------------------------------
 // Training intent handlers
 
-const YesIntentHandler = {
+const YesNoIntentHandler = {
     canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        // TODO: can combine both yes&no intent handlers here!
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent";
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent" 
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.NoIntent")
+            && (sessionAttributes.state == config.states.TRAINING
+                || sessionAttributes.state == config.states.FINISHED);
     },
     async handle(handlerInput) {
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
+        const isYes = Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent";
 
-        let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(true, userId, sessionAttributes, persistentAttributes);
+        let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes);
         
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
         
@@ -260,53 +276,68 @@ const YesIntentHandler = {
 };
 
 
-const NoIntentHandler = {
-    canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.NoIntent";
-    },
-    async handle(handlerInput) {
-        // Get attributes
-        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
+// const NoIntentHandler = {
+//     canHandle(handlerInput) {
+//         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+//         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+//             && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.NoIntent"
+//             && (sessionAttributes.state == config.states.TRAINING
+//                 || sessionAttributes.state == config.states.FINISHED);
+//     },
+//     async handle(handlerInput) {
+//         // Get attributes
+//         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+//         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+//         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
-        let {speakOutput, repromptOutput} = await trainingHandler.handleYesNoIntent(false, userId, sessionAttributes, persistentAttributes);
+//         let {speakOutput, repromptOutput} = await trainingHandler.handleYesNoIntent(false, userId, sessionAttributes, persistentAttributes);
         
-        repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+//         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
-        if (repromptOutput === -1) {
-            // Stop the skill
-            return CancelAndStopIntentHandler.handle(handlerInput);
-        }
+//         if (repromptOutput === -1) {
+//             // Stop the skill
+//             return CancelAndStopIntentHandler.handle(handlerInput);
+//         }
         
-        return handlerInput.responseBuilder
-            .speak(speakOutput)
-            .reprompt(repromptOutput)
-            .getResponse();
-    }
-};
+//         return handlerInput.responseBuilder
+//             .speak(speakOutput)
+//             .reprompt(repromptOutput)
+//             .getResponse();
+//     }
+// };
 
 const NumericAnswerIntentHandler = {
     canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "NumericAnswerIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "NumericAnswerIntent"
+            && sessionAttributes.state == config.states.TRAINING;
     },
     async handle(handlerInput) {
+        console.log("in NumericAnswerIntentHandler");
+
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
         const numericAnswer = Alexa.getSlotValue(handlerInput.requestEnvelope, "numericAnswer");
 
-        let {speakOutput, repromptOutput} = await trainingHandler.handleNumericInput(numericAnswer, userId, sessionAttributes, persistentAttributes);
         
+        console.log("User answer: " + numericAnswer);
+
+        let {speakOutput, repromptOutput} = await trainingHandler.handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes);
+        
+        console.log("Saving attributes...");
+
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
         if (repromptOutput === -1) {
             // Stop the skill
+            console.log("Reprompt is -1. Speak is: " + speakOutput);
             return CancelAndStopIntentHandler.handle(handlerInput);
         }
+
+        console.log("SpeakOutput: " + speakOutput);
         
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -349,8 +380,12 @@ const getCanonicalSlot = (slot) => {
 // Generic input handlers
 const DeleteDataIntentHandler = {
     canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "DeleteDataIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "DeleteDataIntent"
+            && Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED"
+            && (sessionAttributes.state == config.states.CHOOSE_COURSE
+                || sessionAttributes.state == config.states.FINISHED);
     },
     async handle(handlerInput) {
         await handlerInput.attributesManager.deletePersistentAttributes();
@@ -367,7 +402,8 @@ const DeleteDataIntentHandler = {
 const HelpIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent"
+            && Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED";
     },
     handle(handlerInput) {
         // TODO
@@ -384,7 +420,8 @@ const CancelAndStopIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
             && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.CancelIntent"
-                || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent");
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent")
+            && Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED";
     },
     handle(handlerInput) {
         const speakOutput = "Goodbye!";
@@ -447,13 +484,13 @@ exports.handler = Alexa.SkillBuilders.custom()
         LaunchRequestHandler,
         // Config
         StudentNameIntentHandler,
+        // Training
+        NumericAnswerIntentHandler,
+        YesNoIntentHandler,
+        // Course logic
         ChooseCourseIntentHandler,
         ListCoursesIntentHandler,
         ResumeCourseIntentHandler,
-        // Training
-        NumericAnswerIntentHandler,
-        YesIntentHandler,
-        NoIntentHandler,
         // Data handling
         DeleteDataIntentHandler,
         // Generic Alexa
@@ -463,7 +500,6 @@ exports.handler = Alexa.SkillBuilders.custom()
         IntentReflectorHandler, // make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
     )
     .withPersistenceAdapter(
-        //new persistenceAdapter.S3PersistenceAdapter({bucketName:process.env.S3_PERSISTENCE_BUCKET})
         persistenceAdapter
     )
     .addErrorHandlers(

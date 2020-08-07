@@ -94,21 +94,31 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
     let repromptOutput = null;
 
     if (sessionAttributes.state === config.states.TRAINING) {
+        console.log("In training state");
         // Update attributes
         if (sessionAttributes.questionType !== config.questionType.NUMERIC) {
             // We do not expect yes/no for this question type
+            console.log("Invalid answer, not expecting numeric!");
             speakOutput = `Your answer ${numericAnswer} is not valid for this question. ${sessionAttributes.questionText}`;
             repromptOutput = sessionAttributes.questionText;
         } else {
             // Repeat what the user said
-            let introOutput = `You chose answer ${numericAnswer}`;
-            // Yes/No is a valid answer - check if correct.
-            introOutput += await answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes);
-            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes));
-            speakOutput = introOutput + " " + speakOutput;
+            const answerText = getTextForPossibleAnswer(numericAnswer, sessionAttributes.possibleAnswers);
+            if (answerText !== undefined && answerText !== null) {
+                console.log("got answer text: " + answerText);
+                let introOutput = `You chose answer ${numericAnswer}: ${answerText}. `;
+                introOutput += await answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes);
+                ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes));
+                speakOutput = introOutput + " " + speakOutput;
+            } else {
+                console.log("Invalid answer, not possible number!");
+                speakOutput = `You chose answer ${numericAnswer}, but this is not valid for this question. ${sessionAttributes.questionText}`;
+                repromptOutput = sessionAttributes.questionText;
+            }
         }
     } else {
         // Not in training
+        console.log("NOt in training!");
         // TODO: provide instructions on what to do
         speakOutput = "You are currently not in training mode.";
         if (persistentAttributes.repromptOutput !== null) {
@@ -163,8 +173,6 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
         persistentAttributes.totalQuestionsAsked += 1;
     
         // Get question text
-        //const random = getRandom(0, data.length - 1);
-        //const questionDb = require(jsonFilePath);
         const introText = `Question number ${sessionAttributes.questionNumber}: `;
 
         // Depending on question type, modify the text for better speech output
@@ -191,8 +199,8 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes) 
     return {speakOutput, repromptOutput};
 }
 
-function convertPossibleAnswersForSpeech(possibleAnswersFromDb) {
-    const possibleAnswers = possibleAnswersFromDb.split("|");
+function convertPossibleAnswersForSpeech(possibleAnswersString) {
+    const possibleAnswers = possibleAnswersString.split("|");
     let speakText = "";
     for (const [i, curAnswerText] of possibleAnswers.entries()) {
         speakText += (i > 0) ? ", " : " ";
@@ -200,6 +208,11 @@ function convertPossibleAnswersForSpeech(possibleAnswersFromDb) {
     }
     speakText += ".";
     return speakText;
+}
+
+function getTextForPossibleAnswer(answerId, possibleAnswersString) {
+    const possibleAnswers = possibleAnswersString.split("|");
+    return possibleAnswers[answerId-1];
 }
 
 async function getBestNextQuestion(userId, trainingId, completeQuestionList, questionsAskedThisSession) {
@@ -234,10 +247,10 @@ async function calculateQuestionScores(userId, trainingId, completeQuestionList,
         const wrongCount = Object.prototype.hasOwnProperty.call(item, "WrongCount") ? item.WrongCount : 0;
         questionScores.set(item.QuestionId, correctCount - wrongCount);
     });
-    console.log("questionScores: " + questionScores);
-    for (let [key, value] of questionScores.entries()) {
-        console.log("key is " + key + ", value is " + value);
-    }
+    // console.log("questionScores: " + questionScores);
+    // for (let [key, value] of questionScores.entries()) {
+    //     console.log("key is " + key + ", value is " + value);
+    // }
 
     for (const [, questionId] of completeQuestionList.entries()) {
         //console.log('%d: %s', i, value);
@@ -247,30 +260,31 @@ async function calculateQuestionScores(userId, trainingId, completeQuestionList,
             questionScores.set(questionId, -10);
         }
     }
-    console.log("questionScores with added unasked questions: " + questionScores);
-    for (let [key, value] of questionScores.entries()) {
-        console.log("key is " + key + ", value is " + value);
-    }
+    // console.log("questionScores with added unasked questions: " + questionScores);
+    // for (let [key, value] of questionScores.entries()) {
+    //     console.log("key is " + key + ", value is " + value);
+    // }
 
     // Check session question list so that the same question isn't asked twice in a session!
     if (questionsAskedThisSession !== null) {
         questionsAskedThisSession.forEach(item => {
-            let removed = questionScores.delete(item);
-            console.log("Removed already asked entry: " + removed.key + " - " + removed.value);
+            questionScores.delete(item);
+            //let removed = questionScores.delete(item);
+            //console.log("Removed already asked entry: " + removed.key + " - " + removed.value);
         });
     }
 
     const questionScoresSorted = new Map([...questionScores.entries()].sort((a, b) => a[1] - b[1]));
-    console.log("Sorted question scores: " + questionScoresSorted);
-    for (let [key, value] of questionScoresSorted.entries()) {
-        console.log("key is " + key + ", value is " + value);
-    }
+    // console.log("Sorted question scores: " + questionScoresSorted);
+    // for (let [key, value] of questionScoresSorted.entries()) {
+    //     console.log("key is " + key + ", value is " + value);
+    // }
 
     return questionScoresSorted;
 }
 
 async function answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes) {
-    if (sessionAttributes.correctAnswer === numericAnswer) {
+    if (sessionAttributes.correctAnswer === (numericAnswer - 1)) {
         // Correct
         return await answerCorrect(userId, sessionAttributes, persistentAttributes);
     } else {
