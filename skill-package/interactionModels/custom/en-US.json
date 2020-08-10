@@ -28,7 +28,8 @@
             }
           ],
           "samples": [
-            "{StudentName}",
+            "My first name is {StudentName}",
+            "I'm {StudentName}",
             "Call me {StudentName}",
             "I am {StudentName}",
             "My name is {StudentName}"
@@ -68,6 +69,7 @@
             }
           ],
           "samples": [
+            "The answer is {numericAnswer}",
             "It is {numericAnswer}",
             "I choose {numericAnswer}",
             "I think {numericAnswer}",
@@ -156,5 +158,5 @@
       ]
     }
   },
-  "version": "7"
+  "version": "14"
 }
