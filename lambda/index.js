@@ -4,6 +4,10 @@
 
 const Alexa = require("ask-sdk-core");
 //const AWS = require("aws-sdk");
+//const util  = require("./util");
+const i18next = require("i18next"); 
+//const sprintf = require("i18next-sprintf-postprocessor"); 
+const sprintf       = require("sprintf-js").sprintf;
 //const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 const { DynamoDbPersistenceAdapter } = require("ask-sdk-dynamodb-persistence-adapter");
 // eslint-disable-next-line no-undef
@@ -15,6 +19,9 @@ const dbHandler = require("./dbHandler.js");
 //import * as Alexa from 'ask-sdk-core'
 //import persistenceAdapter from 'ask-sdk-s3-persistence-adapter';
 
+const languageStrings = {
+    "en" : require("./i18n/en")
+};
 
 
 // -------------------------------------------------------------------
@@ -36,22 +43,21 @@ const LaunchRequestHandler = {
 
         if (persistentAttributes.studentName) {
             // TODO: Check if there is a course to resume!
-            let speakQuestion = "Would you like to resume your last course or start another course?";
-            speakOutput = `Welcome back ${persistentAttributes.studentName}! ${speakQuestion}`;
+            const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
+            speakOutput = handlerInput.t("WELCOME_PERSONALIZED", {
+                personId: persistentAttributes.studentName,
+                prompt: speakQuestion
+            });
             repromptOutput = speakQuestion; 
             sessionAttributes.state = config.states.CHOOSE_COURSE;
         } else {
-            speakOutput = "Hi and welcome to the learning asssistant! I can help you understand the most important concepts of your courses. First, please tell me your first name!";
-            repromptOutput = "Please tell me your first name.";
+            speakOutput = handlerInput.t("WELCOME");
+            repromptOutput = handlerInput.t("WELCOME_REPROMPT");
             // Initialize new user
             trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
         }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
-
-        //const userId = handlerInput.requestEnvelope.session.user.userId;
-        // TODO: save to DB - userId, so that we can track who used it how many times
-        // DB design: userId, num sessions, num questions answered
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -165,6 +171,27 @@ const ChooseCourseIntentHandler = {
             .getResponse();
     }
 };
+
+// const ListTrainingsApiHandler = {
+//     canHandle(handlerInput) {
+//         return util.isApiRequest(handlerInput, "ListTrainings");
+//     },
+//     async handle(handlerInput) {
+//         console.log("Api Request [RecordColor]: ", JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
+//         // First get our request entity and grab the color passed in the API call
+//         //const args = util.getApiArguments(handlerInput);
+//         //const color = args.color;
+//         const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+
+//         let response = {
+//             apiResponse: {
+//                 CourseNameProperty : availableTrainings
+//             }
+//         };
+//         console.log("Api Response [ListTrainings]: ", JSON.stringify(response, null, 2));
+//         return response;
+//     }
+// };
 
 const ListCoursesIntentHandler = {
     canHandle(handlerInput) {
@@ -470,10 +497,35 @@ const ErrorHandler = {
     }
 };
 
+
+const LocalizationInterceptor = {
+    process(handlerInput) {
+        i18next
+            .init({
+                lng: handlerInput.requestEnvelope.request.locale,
+                fallbackLng: "en", // fallback to EN if locale doesn't exist
+                overloadTranslationOptionHandler: sprintf.overloadTranslationOptionHandler,
+                resources: languageStrings,
+                returnObjects: true
+            });
+ 
+        handlerInput.t = (key, opts) => {
+            const value = i18next.t(key, {...{interpolation: {escapeValue: false}}, ...opts});
+            if (Array.isArray(value)) {
+                return value[Math.floor(Math.random() * value.length)]; // return a random element from the array
+            } else {
+                return value;
+            }
+        };
+    }
+};
+
 exports.handler = Alexa.SkillBuilders.custom()
     .addRequestHandlers(
         // Launch
         LaunchRequestHandler,
+        // Alexa Converstaions
+        //ListTrainingsApiHandler,
         // Config
         StudentNameIntentHandler,
         // Training
@@ -497,4 +549,5 @@ exports.handler = Alexa.SkillBuilders.custom()
     .addErrorHandlers(
         ErrorHandler,
     )
+    .addRequestInterceptors(LocalizationInterceptor)
     .lambda();
