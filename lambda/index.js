@@ -259,18 +259,20 @@ const ResumeCourseIntentHandler = {
         {
             if (persistentAttributes.currentTrainingName !== null) {
                 // Able to resume
-                let introOutput = `Resuming course ${persistentAttributes.currentTrainingName}.`;
+                let introOutput = handlerInput.t("RESUMING_COURSE_START_TRAINING", {
+                    currentTrainingName: persistentAttributes.currentTrainingName
+                });
                 ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, getMainLanguage()));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
-                speakOutput = "You have not started a course yet. Please choose a course first!";
+                speakOutput = handlerInput.t("ERROR_RESUME_NO_COURSE_STARTED");
                 if (persistentAttributes.repromptOutput !== null) {
                     speakOutput += " " + persistentAttributes.repromptOutput;
                     repromptOutput = persistentAttributes.repromptOutput;
                 }
             }
         } else {
-            speakOutput = "I understood that you'd like to resume the previous course. This is not possible right now. ";
+            speakOutput = handlerInput.t("ERROR_RESUME_COURSE_WRONG_STATE");
             if (persistentAttributes.repromptOutput !== null) {
                 speakOutput += " " + persistentAttributes.repromptOutput;
                 repromptOutput = persistentAttributes.repromptOutput;
@@ -395,7 +397,7 @@ const DeleteDataIntentHandler = {
     async handle(handlerInput) {
         await handlerInput.attributesManager.deletePersistentAttributes();
         
-        const speakOutput = "I have deleted your progress and data. See you next time!";
+        const speakOutput = handlerInput.t("DELETE_DATA_CONFIRMED");
         return handlerInput.responseBuilder
             .speak(speakOutput)
             //.reprompt('Was kann ich noch für dich tun?')
@@ -410,13 +412,17 @@ const HelpIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent"
             && Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED";
     },
-    handle(handlerInput) {
-        // TODO
-        const speakOutput = "I'm the teaching assistant and can ask you questions to help you learn for your courses. It works like a quiz!";
+    async handle(handlerInput) {
+        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const speakOutput = handlerInput.t("HELP_PROMPT");
+        let repromptOutput = handlerInput.t("GENERIC_REPROMPT");
+        if (persistentAttributes.repromptOutput !== null) {
+            repromptOutput = persistentAttributes.repromptOutput;
+        }
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            .reprompt(speakOutput)
+            .reprompt(repromptOutput)
             .getResponse();
     }
 };
@@ -428,7 +434,7 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent");
     },
     handle(handlerInput) {
-        const speakOutput = "Goodbye!";
+        const speakOutput = handlerInput.t("EXIT");
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .getResponse();
@@ -447,19 +453,36 @@ const SessionEndedRequestHandler = {
 
 const FallbackIntentHandler = {
     canHandle(handlerInput) {
-        // handle fallback intent, yes and no when playing a game
-        // for yes and no, will only get here if and not caught by the normal intent handler
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-        && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.FallbackIntent";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.FallbackIntent";
     },
-    handle(handlerInput) {
-        // TODO Handle
+    async handle(handlerInput) {
+        let speakOutput = null;
+        let repromptOutput = null;
+        
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-        const speakOutput = `Fallback handler for ${intentName}`;
+
+        console.log(`In fallback handler for ${intentName}. Game state: ${sessionAttributes.state}.`);
+        //const speakOutput = `Fallback handler for ${intentName}`;
+        if (sessionAttributes.state === config.states.TRAINING) {
+            speakOutput = handlerInput.t("FALLBACK_WHILE_TRAINING");
+        } else if (sessionAttributes.state == config.states.STUDENT_NAME) {
+            speakOutput = handlerInput.t("FALLBACK_WHILE_NAME");
+        } else {
+            speakOutput = handlerInput.t("FALLBACK_GENERIC");
+        }
+        if (persistentAttributes.repromptOutput !== null) {
+            repromptOutput = persistentAttributes.repromptOutput;
+            speakOutput += " " + repromptOutput;
+        } else {
+            repromptOutput = speakOutput;
+        }
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .reprompt(repromptOutput)
             .getResponse();
     },
 };
@@ -494,7 +517,10 @@ const ErrorHandler = {
         console.error(`Error handled: ${error.message}`);
         console.error("Error stack", JSON.stringify(error.stack));
         console.error("Error", JSON.stringify(error));
-        const speakOutput = `Sorry, I had trouble doing what you asked. Please try again. Error stack: ${error.stack}`;
+        let speakOutput = handlerInput.t("ERROR");
+        if (error.stack) {
+            speakOutput += " " + error.stack;
+        }
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
