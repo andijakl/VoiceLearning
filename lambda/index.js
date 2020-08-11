@@ -8,7 +8,6 @@ const Alexa = require("ask-sdk-core");
 const i18next = require("i18next"); 
 //const sprintf = require("i18next-sprintf-postprocessor"); 
 const sprintf       = require("sprintf-js").sprintf;
-//const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 const { DynamoDbPersistenceAdapter } = require("ask-sdk-dynamodb-persistence-adapter");
 // eslint-disable-next-line no-undef
 const persistenceAdapter = new DynamoDbPersistenceAdapter({ tableName : process.env.DYNAMODB_TABLE_NAME });
