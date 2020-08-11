@@ -389,7 +389,6 @@ const DeleteDataIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
             && Alexa.getIntentName(handlerInput.requestEnvelope) === "DeleteDataIntent"
-            && Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED"
             && (sessionAttributes.state == config.states.CHOOSE_COURSE
                 || sessionAttributes.state == config.states.FINISHED);
     },
@@ -408,8 +407,7 @@ const DeleteDataIntentHandler = {
 const HelpIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent"
-            && Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED";
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent";
     },
     async handle(handlerInput) {
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
