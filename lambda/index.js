@@ -42,8 +42,6 @@ const LaunchRequestHandler = {
         // Reset saved reprompt output
         persistentAttributes.repromptOutput = null;
 
-        console.log("User Language: " + getMainLanguage());
-
         if (persistentAttributes.studentName) {
             // TODO: Check if there is a course to resume!
             const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
@@ -95,7 +93,7 @@ const StudentNameIntentHandler = {
         if (sessionAttributes.state !== config.states.STUDENT_NAME)
         {
             // TODO handle case where we did not ask for the name
-            speakOutput = "I understood a name, but did not expect that. Please repeat what you wanted to say in case I misunderstood you.";
+            speakOutput = handlerInput.t("ERROR_STUDENT_NAME_WHEN_NOT_EXPECTED");
             if (persistentAttributes.repromptOutput !== null) {
                 speakOutput += " " + persistentAttributes.repromptOutput;
                 repromptOutput = persistentAttributes.repromptOutput;
@@ -148,24 +146,32 @@ const ChooseCourseIntentHandler = {
         console.log("User selected training: " + userTrainingName);
 
         if (userTrainingName === undefined || userTrainingName === null) {
-            speakOutput = "Sorry, I did not get which course you would like to start. Please try again!";
+            speakOutput = handlerInput.t("ERROR_COURSE_NOT_UNDERSTOOD");
             const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
-            repromptOutput = "Please choose one of these courses: " + availableTrainings;
+            repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
+                availableTrainings: availableTrainings
+            });
             speakOutput += " " + repromptOutput;
         } else {
             // Match slot value with available courses and get its ID from the DB
             const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes);
             if (selectedTrainingInfo !== null) {
                 // Training selected successfully
-                let introOutput = `You chose the course: ${persistentAttributes.currentTrainingName}. Let's get started! `;
+                let introOutput = handlerInput.t("SELECTED_COURSE_START_TRAINING", {
+                    currentTrainingName: persistentAttributes.currentTrainingName
+                });
                 // Get question
                 ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, getMainLanguage()));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 // Unable to match slot to training in DB
-                speakOutput = `Sorry, I was unable to match your selection ${userTrainingName} to any of the available trainings. Please try again or contact the skill administrators!`;
+                speakOutput = handlerInput.t("ERROR_COURSE_NOT_FOUND", {
+                    userTrainingName: userTrainingName
+                });
                 const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
-                repromptOutput = "Please choose one of these courses: " + availableTrainings;
+                repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
+                    availableTrainings: availableTrainings
+                });
                 speakOutput += " " + repromptOutput;
             }
         }
@@ -216,7 +222,9 @@ const ListCoursesIntentHandler = {
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
    
         const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
-        speakOutput = `You can choose one of these available courses: ${availableTrainings}. `;
+        speakOutput = handlerInput.t("AVAILABLE_COURSES_LIST", {
+            availableTrainings: availableTrainings
+        });
 
         // Keep reprompt output from previous question
         repromptOutput = persistentAttributes.repromptOutput;
