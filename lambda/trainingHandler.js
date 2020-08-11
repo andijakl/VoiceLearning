@@ -37,7 +37,7 @@ module.exports.selectTraining = async function selectTraining(userTrainingName, 
     return foundTraining;
 };
 
-module.exports.startNewTraining = async function startNewTraining(userId, sessionAttributes, persistentAttributes, language) {
+module.exports.startNewTraining = async function startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, language) {
     //console.log("c Persistent attributes: " + JSON.stringify(persistentAttributes));
     persistentAttributes.startedTrainings += 1;
     sessionAttributes.state = config.states.TRAINING;
@@ -46,41 +46,50 @@ module.exports.startNewTraining = async function startNewTraining(userId, sessio
     sessionAttributes.questionsAskedThisSession = [];
     // Get current question list
     sessionAttributes.questionList = await dbHandler.getQuestionIdListForTraining(persistentAttributes.currentTrainingId);
-    return await getNextQuestion(userId, sessionAttributes, persistentAttributes, language);
+    return await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language);
 };
 
-module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, language) {
+module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
     if (sessionAttributes.state === config.states.TRAINING) {
+        const answerAsText = (isYes ? handlerInput.t("YES") : handlerInput.t("NO"));
         // Update attributes
         if (sessionAttributes.questionType !== config.questionType.YES_NO) {
             // We do not expect yes/no for this question type
-            speakOutput = "Your answer " + (isYes ? "yes" : "no") + " is not valid for this question. " + sessionAttributes.questionText;
+            speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
+                answerAsText: answerAsText
+            });
+            speakOutput += " " + sessionAttributes.questionText;
             repromptOutput = sessionAttributes.questionText;
         } else {
             // Repeat what the user said
-            let introOutput = "You said " + (isYes ? "yes" : "no") + ". ";
+            let introOutput = handlerInput.t("TRAINING_REPEAT_ANSWER", {
+                answerAsText: answerAsText
+            });
+            introOutput += " ";
             // Yes/No is a valid answer - check if correct.
-            introOutput += await answerIsYesNoCorrect(isYes, userId, sessionAttributes, persistentAttributes);
-            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, language));
+            introOutput += await answerIsYesNoCorrect(isYes, userId, sessionAttributes, persistentAttributes, handlerInput);
+            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language));
             speakOutput = introOutput + " " + speakOutput;
         }
     } else if (sessionAttributes.state === config.states.FINISHED) {
         if (isYes) {
-            let introOutput = `Restarting your course ${persistentAttributes.currentTrainingName}`;
-            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes, language));
+            let introOutput = handlerInput.t("RESTART_COURSE_START_TRAINING", {
+                currentTrainingName: persistentAttributes.currentTrainingName
+            });
+            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, language));
             speakOutput = introOutput + " " + speakOutput;
         } else {
-            // Finished trainingand user doesn't want to restart
-            speakOutput = "Thanks for training today. I hope I was able to help. Good bye!";
+            // Finished training and user doesn't want to restart
+            speakOutput = handlerInput.t("TRAINING_FINISHED_NO_RESTART");
             repromptOutput = -1;
         }
     } else {
         // Not in training
         // TODO: provide instructions on what to do
-        speakOutput = "You are currently not in training mode.";
+        speakOutput = handlerInput.t("ERROR_NOT_IN_TRAINING_MODE");
         if (persistentAttributes.repromptOutput !== null) {
             speakOutput += " " + persistentAttributes.repromptOutput;
         }
@@ -89,7 +98,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
     return { speakOutput, repromptOutput };
 };
 
-module.exports.handleNumericIntent = async function handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, language) {
+module.exports.handleNumericIntent = async function handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, handlerInput, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -97,26 +106,36 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
         // Update attributes
         if (sessionAttributes.questionType !== config.questionType.NUMERIC) {
             // We do not expect yes/no for this question type
-            speakOutput = `Your answer ${numericAnswer} is not valid for this question. ${sessionAttributes.questionText}`;
+            speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
+                answerAsText: numericAnswer
+            });
+            speakOutput += " " + sessionAttributes.questionText;
             repromptOutput = sessionAttributes.questionText;
         } else {
             // Repeat what the user said
             const answerAsInt = parseInt(numericAnswer);
             const answerText = getTextForPossibleAnswer(answerAsInt, sessionAttributes.possibleAnswers);
             if (answerText !== undefined && answerText !== null) {
-                let introOutput = `You chose answer ${answerAsInt}: ${answerText}. `;
-                introOutput += await answerIsNumericCorrect(answerAsInt, userId, sessionAttributes, persistentAttributes);
-                ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, language));
+                let introOutput = handlerInput.t("TRAINING_REPEAT_NUMERIC_ANSWER", {
+                    answerAsInt: answerAsInt,
+                    answerText: answerText
+                });
+                introOutput += " ";
+                introOutput += await answerIsNumericCorrect(answerAsInt, userId, sessionAttributes, persistentAttributes, handlerInput);
+                ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
-                speakOutput = `You chose answer ${answerAsInt}, but this is not valid for this question. ${sessionAttributes.questionText}`;
+                speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
+                    answerAsText: answerAsInt
+                });
+                speakOutput += " " + sessionAttributes.questionText;
                 repromptOutput = sessionAttributes.questionText;
             }
         }
     } else {
         // Not in training
         // TODO: provide instructions on what to do
-        speakOutput = "You are currently not in training mode.";
+        speakOutput = handlerInput.t("ERROR_NOT_IN_TRAINING_MODE");
         if (persistentAttributes.repromptOutput !== null) {
             speakOutput += " " + persistentAttributes.repromptOutput;
         }
@@ -128,18 +147,22 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
 // -------------------------------------------------------------------
 // Private functions
 
-async function getNextQuestion(userId, sessionAttributes, persistentAttributes, language) {
+async function getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
     if (sessionAttributes.questionNumber >= config.numQuestionsPerTraining) {
         // Training finished
         await trainingFinished(sessionAttributes, persistentAttributes);
-        speakOutput = `This training session is finished! You got a score of ${sessionAttributes.score} out of ${sessionAttributes.questionNumber}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
-        repromptOutput = "Would you like to train again?";
+        speakOutput = handlerInput.t("TRAINING_FINISHED", {
+            score: sessionAttributes.score,
+            questionNumber: sessionAttributes.questionNumber,
+            finishedTrainings: persistentAttributes.finishedTrainings
+        });
+        repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
         speakOutput += " " + repromptOutput;
     } else {
-        ({speakOutput, repromptOutput} = await getQuestionText(userId, sessionAttributes, persistentAttributes, language));
+        ({speakOutput, repromptOutput} = await getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language));
     }
 
     return {speakOutput, repromptOutput};
@@ -147,7 +170,7 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
 
 
 // Function to retrieve the next question
-async function getQuestionText(userId, sessionAttributes, persistentAttributes, language) {
+async function getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -160,8 +183,13 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
         // No question left to ask
         // Training finished
         await trainingFinished(sessionAttributes, persistentAttributes);
-        speakOutput = `I don't have any further questions for you right now. This training session is finished! You got a score of ${sessionAttributes.score} out of ${sessionAttributes.questionNumber}. You already finished ${persistentAttributes.finishedTrainings} trainings.`;
-        repromptOutput = "Would you like to train again?";
+        speakOutput = handlerInput.t("TRAINING_FINISHED_NO_MORE_QUESTIONS");
+        speakOutput += " " + handlerInput.t("TRAINING_FINISHED", {
+            score: sessionAttributes.score,
+            questionNumber: sessionAttributes.questionNumber,
+            finishedTrainings: persistentAttributes.finishedTrainings
+        });
+        repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
         speakOutput += " " + repromptOutput;
     } else {
         // Update session variables
@@ -169,12 +197,14 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
         persistentAttributes.totalQuestionsAsked += 1;
     
         // Get question text
-        const introText = `Question number ${sessionAttributes.questionNumber}: `;
+        const introText = handlerInput.t("TRAINING_QUESTION_INTRO", {
+            questionNumber: sessionAttributes.questionNumber
+        });
 
         // Depending on question type, modify the text for better speech output
         if (questionData.QuestionType === config.questionType.YES_NO) {
             // add possible answers like: "yes or no?"
-            questionData.QuestionText += " Yes or no?";
+            questionData.QuestionText += " " + handlerInput.t("TRAINING_YES_NO_OPTIONS");
         } else if (questionData.QuestionType === config.questionType.NUMERIC) {
             // Parse possible answers
             questionData.QuestionText += convertPossibleAnswersForSpeech(questionData.PossibleAnswers);
@@ -235,72 +265,53 @@ async function calculateQuestionScores(userId, trainingId, completeQuestionList,
 
     // Loop over user answers and calculate score for each question
     answerList.forEach(item => {
-        // console.log("item data: " + item);
-        // console.log("has CorrectCount 1: " + Object.prototype.hasOwnProperty.call(item, "CorrectCount"));
-        // console.log("has CorrectCount 2: " + ("CorrectCount" in item));
-        // console.log("item.CorrectCount" + item.CorrectCount);
         const correctCount = Object.prototype.hasOwnProperty.call(item, "CorrectCount") ? item.CorrectCount : 0;
         const wrongCount = Object.prototype.hasOwnProperty.call(item, "WrongCount") ? item.WrongCount : 0;
         questionScores.set(item.QuestionId, correctCount - wrongCount);
     });
-    // console.log("questionScores: " + questionScores);
-    // for (let [key, value] of questionScores.entries()) {
-    //     console.log("key is " + key + ", value is " + value);
-    // }
 
     for (const [, questionId] of completeQuestionList.entries()) {
-        //console.log('%d: %s', i, value);
         if (!questionScores.has(questionId)) {
             // Question has never been asked - give it a score of -10 to prioritize it
             // over questions that have already been asked, but with a wrong answer.
             questionScores.set(questionId, -10);
         }
     }
-    // console.log("questionScores with added unasked questions: " + questionScores);
-    // for (let [key, value] of questionScores.entries()) {
-    //     console.log("key is " + key + ", value is " + value);
-    // }
 
     // Check session question list so that the same question isn't asked twice in a session!
     if (questionsAskedThisSession !== null) {
         questionsAskedThisSession.forEach(item => {
             questionScores.delete(item);
-            //let removed = questionScores.delete(item);
-            //console.log("Removed already asked entry: " + removed.key + " - " + removed.value);
         });
     }
 
     const questionScoresSorted = new Map([...questionScores.entries()].sort((a, b) => a[1] - b[1]));
-    // console.log("Sorted question scores: " + questionScoresSorted);
-    // for (let [key, value] of questionScoresSorted.entries()) {
-    //     console.log("key is " + key + ", value is " + value);
-    // }
 
     return questionScoresSorted;
 }
 
-async function answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes) {
+async function answerIsNumericCorrect(numericAnswer, userId, sessionAttributes, persistentAttributes, handlerInput) {
     if (sessionAttributes.correctAnswer === numericAnswer) {
         // Correct
-        return await answerCorrect(userId, sessionAttributes, persistentAttributes);
+        return await answerCorrect(userId, sessionAttributes, persistentAttributes, handlerInput);
     } else {
         // Not correct
-        return await answerWrong(userId, sessionAttributes, persistentAttributes);
+        return await answerWrong(userId, sessionAttributes, persistentAttributes, handlerInput);
     }
 }
 
-async function answerIsYesNoCorrect(answerIsYes, userId, sessionAttributes, persistentAttributes) {
+async function answerIsYesNoCorrect(answerIsYes, userId, sessionAttributes, persistentAttributes, handlerInput) {
     if ((sessionAttributes.correctAnswer === 1 && answerIsYes) ||
         (sessionAttributes.correctAnswer === 0 && !answerIsYes)) {
         // Correct
-        return await answerCorrect(userId, sessionAttributes, persistentAttributes);
+        return await answerCorrect(userId, sessionAttributes, persistentAttributes, handlerInput);
     } else {
         // Not correct
-        return await answerWrong(userId, sessionAttributes, persistentAttributes);
+        return await answerWrong(userId, sessionAttributes, persistentAttributes, handlerInput);
     }
 }
 
-async function answerCorrect(userId, sessionAttributes, persistentAttributes) {
+async function answerCorrect(userId, sessionAttributes, persistentAttributes, handlerInput) {
     sessionAttributes.score += 1;
     persistentAttributes.totalCorrectAnswers += 1;
 
@@ -308,19 +319,17 @@ async function answerCorrect(userId, sessionAttributes, persistentAttributes) {
     const questionId = sessionAttributes.questionId;
     await dbHandler.logAnswerForUser(userId, trainingId, questionId, true);
 
-    let speakText = "Congratulations, the answer is correct!";
-    return speakText;
+    return handlerInput.t("TRAINING_ANSWER_CORRECT");
 }
 
-async function answerWrong(userId, sessionAttributes, persistentAttributes) {
+async function answerWrong(userId, sessionAttributes, persistentAttributes, handlerInput) {
     persistentAttributes.totalWrongAnswers += 1;
 
     const trainingId = persistentAttributes.currentTrainingId;
     const questionId = sessionAttributes.questionId;
     await dbHandler.logAnswerForUser(userId, trainingId, questionId, false);
 
-    let speakText = "Sorry, your answer was wrong.";
-    return speakText;
+    return handlerInput.t("TRAINING_ANSWER_WRONG");
 }
 
 
@@ -332,25 +341,3 @@ async function trainingFinished(sessionAttributes, persistentAttributes) {
     sessionAttributes.state = config.states.FINISHED;
     persistentAttributes.finishedTrainings += 1;
 }
-
-
-// -------------------------------------------------------------------
-// // Custom utility functions
-// function getRandom(min, max) {
-//     return Math.floor((Math.random() * ((max - min) + 1)) + min);
-// }
-  
-
-// // This function takes the contents of an array and randomly shuffles it.
-// function shuffle(array) {
-//     let currentIndex = array.length, temporaryValue, randomIndex;
-  
-//     while ( 0 !== currentIndex ) {
-//       randomIndex = Math.floor(Math.random() * currentIndex);
-//       currentIndex--;
-//       temporaryValue = array[currentIndex];
-//       array[currentIndex] = array[randomIndex];
-//       array[randomIndex] = temporaryValue;
-//     }
-//     return array;
-// }
