@@ -96,31 +96,33 @@
           "name": "DeleteDataIntent",
           "slots": [],
           "samples": [
-            "Remove my progress",
-            "Remove my data",
-            "Clean my data",
-            "Clear my data",
-            "Delete everything you know about me",
-            "Forget my data",
-            "Delete my data"
+            "Lösche meinen Fortschritt",
+            "Lösche meine Daten",
+            "Entferne meine Daten",
+            "Lösche alles was du über mich weißt",
+            "Vergiss meine Daten"
           ]
         },
         {
           "name": "ListCoursesIntent",
           "slots": [],
           "samples": [
-            "Please start another tranining",
-            "Please start another course",
-            "I would like to start another course",
-            "Start another training",
-            "Start another course",
-            "What trainings can i do",
-            "Which trainings are available",
-            "What can I do",
-            "Which courses can I do",
-            "Which trainings can I do",
-            "Which trainings do you have",
-            "Which courses are available"
+            "Liste der Trainings",
+            "Liste der Kurse",
+            "Welche Lehrveranstaltungen gibt es",
+            "Welche Lehrveranstaltungen stehen zur Verfügung",
+            "Bitte starte ein anderes Training",
+            "Bitte starte einen anderen Kurs",
+            "Ich würde gerne einen andernen Kurs starten",
+            "Starte ein anderes Training",
+            "Starte einen anderen Kurs",
+            "Welche Trainings kann ich machen",
+            "Welche Trainings sind verfügbar",
+            "Liste der Lehrveranstaltungen",
+            "Welche Kurse kann ich machen",
+            "Welche Lehrveranstaltungen kann ich machen",
+            "Welche Trainings hast du",
+            "Welche Kurse sind verfügbar"
           ]
         },
         {
@@ -136,6 +138,10 @@
               "name": {
                 "value": "3D Visualization",
                 "synonyms": [
+                  "3D Grafik",
+                  "Drei D Visualisierung",
+                  "3D Visualisierung",
+                  "Visualisierung",
                   "visualisation",
                   "visualization",
                   "Graphics",
@@ -150,6 +156,8 @@
               "name": {
                 "value": "Web Technologies",
                 "synonyms": [
+                  "Internet Technologien",
+                  "Web Technologien",
                   "Web Tech",
                   "Internet",
                   "Web"
@@ -167,5 +175,5 @@
       }
     }
   },
-  "version": "2"
+  "version": "7"
 }
