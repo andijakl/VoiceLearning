@@ -66,7 +66,7 @@ module.exports.getQuestionIdListForTraining = async function getQuestionIdListFo
     }
 };
 
-module.exports.getQuestion = async function getQuestion(trainingId, questionId) {
+module.exports.getQuestion = async function getQuestion(trainingId, questionId, language) {
     const params = {
         TableName: DB_TABLE_QUESTIONS,
         Key: {
@@ -76,8 +76,20 @@ module.exports.getQuestion = async function getQuestion(trainingId, questionId) 
     };
     try {
         const db = connectToDb();
-        const data = await db.get(params).promise();
-        console.log("Got question: " + JSON.stringify(data.Item));
+        let data = await db.get(params).promise();
+        // TODO get question in provided language
+        // Overwrite question text with locale specific version if available
+        const localeQuestionKey = "QuestionText-" + language;
+        if (data.Item[localeQuestionKey]) {
+            data.Item["QuestionText"] = data.Item[localeQuestionKey];
+            //console.log("Overwriting QuestionText with: " + data.Item["QuestionText"]);
+        }
+        // Overwrite answer text with locale specific version if available
+        const localeAnswersKey = "PossibleAnswers-" + language;
+        if (data.Item[localeAnswersKey]) {
+            data.Item["PossibleAnswers"] = data.Item[localeAnswersKey];
+            //console.log("Overwriting PossibleAnswers with: " + data.Item["PossibleAnswers"]);
+        }
         return data.Item;
     } catch (err) {
         console.log("Error getting data from db: " + err.message);

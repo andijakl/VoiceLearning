@@ -37,7 +37,7 @@ module.exports.selectTraining = async function selectTraining(userTrainingName, 
     return foundTraining;
 };
 
-module.exports.startNewTraining = async function startNewTraining(userId, sessionAttributes, persistentAttributes) {
+module.exports.startNewTraining = async function startNewTraining(userId, sessionAttributes, persistentAttributes, language) {
     //console.log("c Persistent attributes: " + JSON.stringify(persistentAttributes));
     persistentAttributes.startedTrainings += 1;
     sessionAttributes.state = config.states.TRAINING;
@@ -46,10 +46,10 @@ module.exports.startNewTraining = async function startNewTraining(userId, sessio
     sessionAttributes.questionsAskedThisSession = [];
     // Get current question list
     sessionAttributes.questionList = await dbHandler.getQuestionIdListForTraining(persistentAttributes.currentTrainingId);
-    return await getNextQuestion(userId, sessionAttributes, persistentAttributes);
+    return await getNextQuestion(userId, sessionAttributes, persistentAttributes, language);
 };
 
-module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes) {
+module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -64,13 +64,13 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
             let introOutput = "You said " + (isYes ? "yes" : "no") + ". ";
             // Yes/No is a valid answer - check if correct.
             introOutput += await answerIsYesNoCorrect(isYes, userId, sessionAttributes, persistentAttributes);
-            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes));
+            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, language));
             speakOutput = introOutput + " " + speakOutput;
         }
     } else if (sessionAttributes.state === config.states.FINISHED) {
         if (isYes) {
             let introOutput = `Restarting your course ${persistentAttributes.currentTrainingName}`;
-            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes));
+            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes, language));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             // Finished trainingand user doesn't want to restart
@@ -89,7 +89,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
     return { speakOutput, repromptOutput };
 };
 
-module.exports.handleNumericIntent = async function handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes) {
+module.exports.handleNumericIntent = async function handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -106,7 +106,7 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
             if (answerText !== undefined && answerText !== null) {
                 let introOutput = `You chose answer ${answerAsInt}: ${answerText}. `;
                 introOutput += await answerIsNumericCorrect(answerAsInt, userId, sessionAttributes, persistentAttributes);
-                ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes));
+                ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, language));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 speakOutput = `You chose answer ${answerAsInt}, but this is not valid for this question. ${sessionAttributes.questionText}`;
@@ -128,7 +128,7 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
 // -------------------------------------------------------------------
 // Private functions
 
-async function getNextQuestion(userId, sessionAttributes, persistentAttributes) {
+async function getNextQuestion(userId, sessionAttributes, persistentAttributes, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
@@ -139,7 +139,7 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes) 
         repromptOutput = "Would you like to train again?";
         speakOutput += " " + repromptOutput;
     } else {
-        ({speakOutput, repromptOutput} = await getQuestionText(userId, sessionAttributes, persistentAttributes));
+        ({speakOutput, repromptOutput} = await getQuestionText(userId, sessionAttributes, persistentAttributes, language));
     }
 
     return {speakOutput, repromptOutput};
@@ -147,14 +147,14 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes) 
 
 
 // Function to retrieve the next question
-async function getQuestionText(userId, sessionAttributes, persistentAttributes) {
+async function getQuestionText(userId, sessionAttributes, persistentAttributes, language) {
     let speakOutput = null;
     let repromptOutput = null;
 
     // Get best question to ask the user,
     // considering questions already asked this session as well as the 
     // overall correct/wrong ratio of questions in this training.
-    let questionData = await getBestNextQuestion(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList, sessionAttributes.questionsAskedThisSession);
+    let questionData = await getBestNextQuestion(userId, persistentAttributes.currentTrainingId, sessionAttributes.questionList, sessionAttributes.questionsAskedThisSession, language);
 
     if (questionData === null) {
         // No question left to ask
@@ -211,7 +211,7 @@ function getTextForPossibleAnswer(answerId, possibleAnswersString) {
     return possibleAnswers[answerId-1];
 }
 
-async function getBestNextQuestion(userId, trainingId, completeQuestionList, questionsAskedThisSession) {
+async function getBestNextQuestion(userId, trainingId, completeQuestionList, questionsAskedThisSession, language) {
     const sortedQuestionScores = await calculateQuestionScores(userId, trainingId, completeQuestionList, questionsAskedThisSession);
     // Check if we have questions left!
     if (sortedQuestionScores.size > 0) {
@@ -219,8 +219,8 @@ async function getBestNextQuestion(userId, trainingId, completeQuestionList, que
         const topQuestion = sortedQuestionScores.entries().next().value;
         //console.log("Top question ID: " + topQuestion[0] + ", score: " + topQuestion[1]);
         // Get data for this question
-        let questionData = await dbHandler.getQuestion(trainingId, topQuestion[0]);
-        console.log("Question data: " + questionData);
+        let questionData = await dbHandler.getQuestion(trainingId, topQuestion[0], language);
+        //console.log("Question data: " + JSON.stringify(questionData));
         return questionData;
     } else {
         // No question left to ask
