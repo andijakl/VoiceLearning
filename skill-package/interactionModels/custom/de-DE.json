@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "learning assistant",
+      "invocationName": "lern assistent",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",
@@ -28,11 +28,11 @@
             }
           ],
           "samples": [
-            "My first name is {StudentName}",
-            "I'm {StudentName}",
-            "Call me {StudentName}",
-            "I am {StudentName}",
-            "My name is {StudentName}"
+            "Mein Vorname ist {StudentName}",
+            "Ich bin {StudentName}",
+            "Nenne mich {StudentName}",
+            "Ich heiße {StudentName}",
+            "Mein Name ist {StudentName}"
           ]
         },
         {
@@ -44,12 +44,12 @@
             }
           ],
           "samples": [
-            "Lecture {course}",
-            "Start {course}",
-            "I want to train {course}",
-            "Train {course}",
+            "Kurs {course}",
+            "Starte {course}",
+            "Ich will {course} üben",
+            "Trainiere {course}",
             "{course}",
-            "Start course {course}"
+            "Starte Kurs {course}"
           ]
         },
         {
@@ -69,27 +69,27 @@
             }
           ],
           "samples": [
-            "The answer is {numericAnswer}",
-            "It is {numericAnswer}",
-            "I choose {numericAnswer}",
-            "I think {numericAnswer}",
+            "Die Antwort ist {numericAnswer}",
+            "Es ist {numericAnswer}",
+            "Ich wähle {numericAnswer}",
+            "Ich denke {numericAnswer}",
             "{numericAnswer}",
-            "My answer is {numericAnswer}"
+            "Meine Antwort ist {numericAnswer}"
           ]
         },
         {
           "name": "ResumeCourseIntent",
           "slots": [],
           "samples": [
-            "Please resume",
-            "I would like to resume",
-            "I want to continue",
-            "I want to resume",
-            "I want to resume the course",
-            "Continue",
-            "Resume",
-            "Continue course",
-            "Resume course"
+            "Bitte fortsetzen",
+            "Ich würde gerne fortsetzen",
+            "Ich will weiter machen",
+            "Ich will fortsetzen",
+            "Ich will den Kurs fortsetzen",
+            "Weiter",
+            "Fortsetzen",
+            "Kurs Fortsetzen",
+            "Lehrveranstaltung fortsetzen"
           ]
         },
         {
@@ -167,5 +167,5 @@
       }
     }
   },
-  "version": "24"
+  "version": "2"
 }

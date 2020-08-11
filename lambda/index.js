@@ -20,7 +20,8 @@ const dbHandler = require("./dbHandler.js");
 //import persistenceAdapter from 'ask-sdk-s3-persistence-adapter';
 
 const languageStrings = {
-    "en" : require("./i18n/en")
+    "en" : require("./i18n/en"),
+    "de" : require("./i18n/de"),
 };
 
 
@@ -45,7 +46,7 @@ const LaunchRequestHandler = {
             // TODO: Check if there is a course to resume!
             const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
             speakOutput = handlerInput.t("WELCOME_PERSONALIZED", {
-                personId: persistentAttributes.studentName,
+                studentName: persistentAttributes.studentName,
                 prompt: speakQuestion
             });
             repromptOutput = speakQuestion; 
@@ -103,8 +104,13 @@ const StudentNameIntentHandler = {
             persistentAttributes.studentName = studentName;
             
             const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
-            speakOutput = `Hi ${studentName}. I'm happy to help you with learning for your courses. I have content for these courses: ${availableTrainings}. Which course should I start?`;
-            repromptOutput = "Please choose one of these courses: " + availableTrainings;
+            speakOutput = handlerInput.t("AVAILABLE_COURSES", {
+                studentName: studentName,
+                availableTrainings: availableTrainings
+            });
+            speakOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
+                availableTrainings: availableTrainings
+            });
         }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
@@ -439,8 +445,7 @@ const CancelAndStopIntentHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
             && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.CancelIntent"
-                || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent")
-            && Alexa.getDialogState(handlerInput.requestEnvelope) === "COMPLETED";
+                || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent");
     },
     handle(handlerInput) {
         const speakOutput = "Goodbye!";
@@ -458,6 +463,25 @@ const SessionEndedRequestHandler = {
         // Any cleanup logic goes here.
         return handlerInput.responseBuilder.getResponse();
     }
+};
+
+const FallbackIntentHandler = {
+    canHandle(handlerInput) {
+        // handle fallback intent, yes and no when playing a game
+        // for yes and no, will only get here if and not caught by the normal intent handler
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+        && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.FallbackIntent";
+    },
+    handle(handlerInput) {
+        // TODO Handle
+        const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+        const speakOutput = `Fallback handler for ${intentName}`;
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    },
 };
 
 // The intent reflector is used for interaction model testing and debugging.
@@ -487,7 +511,9 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
-        console.log(`~~~~ Error handled: ${error.stack}`);
+        console.error(`Error handled: ${error.message}`);
+        console.error("Error stack", JSON.stringify(error.stack));
+        console.error("Error", JSON.stringify(error));
         const speakOutput = `Sorry, I had trouble doing what you asked. Please try again. Error stack: ${error.stack}`;
 
         return handlerInput.responseBuilder
@@ -541,6 +567,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         HelpIntentHandler,
         CancelAndStopIntentHandler,
         SessionEndedRequestHandler,
+        FallbackIntentHandler,
         IntentReflectorHandler, // make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
     )
     .withPersistenceAdapter(
