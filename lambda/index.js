@@ -102,7 +102,7 @@ const StudentNameIntentHandler = {
             sessionAttributes.state = config.states.CHOOSE_COURSE;
             persistentAttributes.studentName = studentName;
             
-            const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
             speakOutput = handlerInput.t("AVAILABLE_COURSES", {
                 studentName: studentName,
                 availableTrainings: availableTrainings
@@ -146,7 +146,7 @@ const ChooseCourseIntentHandler = {
 
         if (userTrainingName === undefined || userTrainingName === null) {
             speakOutput = handlerInput.t("ERROR_COURSE_NOT_UNDERSTOOD");
-            const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
             repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
                 availableTrainings: availableTrainings
             });
@@ -167,7 +167,7 @@ const ChooseCourseIntentHandler = {
                 speakOutput = handlerInput.t("ERROR_COURSE_NOT_FOUND", {
                     userTrainingName: userTrainingName
                 });
-                const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+                const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
                 repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
                     availableTrainings: availableTrainings
                 });
@@ -194,7 +194,7 @@ const ChooseCourseIntentHandler = {
 //         // First get our request entity and grab the color passed in the API call
 //         //const args = util.getApiArguments(handlerInput);
 //         //const color = args.color;
-//         const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+//         const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
 
 //         let response = {
 //             apiResponse: {
@@ -220,7 +220,7 @@ const ListCoursesIntentHandler = {
         // Get attributes
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
    
-        const availableTrainings = await dbHandler.getTrainingNamesForSpeech();
+        const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
         speakOutput = handlerInput.t("AVAILABLE_COURSES_LIST", {
             availableTrainings: availableTrainings
         });
@@ -557,7 +557,7 @@ const LocalizationInterceptor = {
 };
 
 function getMainLanguage() {
-    return i18next.language.substring(0, 2);
+    return (i18next.language) ? i18next.language.substring(0, 2) : "en";
 }
 
 exports.handler = Alexa.SkillBuilders.custom()

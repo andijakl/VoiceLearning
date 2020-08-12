@@ -17,22 +17,37 @@ function connectToDb() {
     return ddbInstance;
 }
 
-module.exports.getTrainingList = async function getTrainingList() {
+module.exports.getTrainingList = async function getTrainingList(language) {
     const params = {
         TableName: DB_TABLE_TRAININGS
     };
     try {
         const db = connectToDb();
-        const data = await db.scan(params).promise();
-        console.log("db getTrainingList: " + JSON.stringify(data.Items));
-        return data.Items;
+        let data = await db.scan(params).promise();
+        // Remove trainings not available in the specified language
+        // (This could probably be done in the db query already)
+        let trainingItems = data.Items;
+        //console.log("db getTrainingList: " + JSON.stringify(trainingItems));
+        //console.log("Removing all items not available in language: " + language);
+        
+        for (let [key, value] of Object.entries(trainingItems)) {
+            // DynamoDB returns an interesting object for the StringSet used for storing the languages, 
+            // containing "type", "values" and "wrapperName"
+            // Accessing Object.values()[1] gives an array with just the plain strings, which
+            // seems to be the easiest way for accessing this.
+            if (!(Object.values(value.Languages)[1]).some(lng => lng === language)) {
+                delete trainingItems[key];
+            }
+        }
+        //console.log("cleaned list: " + JSON.stringify(trainingItems));
+        return trainingItems;
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
     }
 };
 
-module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech() {
-    let trainings = await module.exports.getTrainingList();
+module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech(language) {
+    let trainings = await module.exports.getTrainingList(language);
     //console.log("got trainings: " + JSON.stringify(trainings));
     // Well, I'm sure there is some more elegant alternative for this in JS.
     let trainingNames = [];
