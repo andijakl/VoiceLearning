@@ -271,6 +271,14 @@ const ResumeCourseIntentHandler = {
                     repromptOutput = sessionAttributes.repromptOutput;
                 }
             }
+        } else if (sessionAttributes.state === config.states.FINISHED) {
+            // Training is finished and user said resume
+            // Start training again
+            let introOutput = handlerInput.t("RESTART_COURSE_START_TRAINING", {
+                currentTrainingName: persistentAttributes.currentTrainingName
+            });
+            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
+            speakOutput = introOutput + " " + speakOutput;
         } else {
             speakOutput = handlerInput.t("ERROR_RESUME_COURSE_WRONG_STATE");
             if (sessionAttributes.repromptOutput !== null) {
@@ -295,7 +303,6 @@ const ResumeCourseIntentHandler = {
 const YesNoIntentHandler = {
     canHandle(handlerInput) {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        // TODO: can combine both yes&no intent handlers here!
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
             && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent" 
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.NoIntent")
@@ -303,15 +310,9 @@ const YesNoIntentHandler = {
                 || sessionAttributes.state == config.states.FINISHED);
     },
     async handle(handlerInput) {
-        // Get attributes
-        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
         const isYes = Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent";
 
-        let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
-        
-        repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+        let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
 
         // User doesn't want to continue with the skill - stop
         if (repromptOutput === -1) {
@@ -325,6 +326,53 @@ const YesNoIntentHandler = {
             .getResponse();
     }
 };
+
+
+const TrueFalseIntentHandler = {
+    canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "TrueFalseAnswerIntent" 
+            && sessionAttributes.state == config.states.TRAINING;
+    },
+    async handle(handlerInput) {
+        const trueFalseAnswerSlot = Alexa.getSlot(handlerInput.requestEnvelope, "TrueFalse");
+
+        //console.log("slot value: " + trueFalseAnswerSlot);
+        // Get actual main slot value, not the spoken synonym
+        const trueFalseAnswer = getCanonicalSlot(trueFalseAnswerSlot);
+        console.log("Canonical: " + trueFalseAnswer);
+
+        const isYes = trueFalseAnswer.localeCompare("true", undefined, { sensitivity: "accent" }) === 0;
+
+        let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
+
+        // User doesn't want to continue with the skill - stop
+        if (repromptOutput === -1) {
+            // Stop the skill
+            return CancelAndStopIntentHandler.handle(handlerInput);
+        }
+        
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(repromptOutput)
+            .getResponse();
+    }
+};
+
+async function HandleYesNoTrueFalse(isYes, handlerInput) {
+    // Get attributes
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+    const userId = Alexa.getUserId(handlerInput.requestEnvelope);
+
+    let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
+    
+    repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+
+    return { speakOutput, repromptOutput };
+}
+
 
 
 const NumericAnswerIntentHandler = {
@@ -470,7 +518,7 @@ const FallbackIntentHandler = {
         //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
 
-        console.log(`In fallback handler for ${intentName}. Game state: ${sessionAttributes.state}.`);
+        console.log(`In fallback handler for ${intentName}. State: ${sessionAttributes.state}.`);
         //const speakOutput = `Fallback handler for ${intentName}`;
         if (sessionAttributes.state === config.states.TRAINING) {
             speakOutput = handlerInput.t("FALLBACK_WHILE_TRAINING");
@@ -573,6 +621,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         // Training
         NumericAnswerIntentHandler,
         YesNoIntentHandler,
+        TrueFalseIntentHandler,
         // Course logic
         ChooseCourseIntentHandler,
         ListCoursesIntentHandler,

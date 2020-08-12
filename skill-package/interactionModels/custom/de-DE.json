@@ -89,7 +89,10 @@
             "Weiter",
             "Fortsetzen",
             "Kurs Fortsetzen",
-            "Lehrveranstaltung fortsetzen"
+            "Lehrveranstaltung fortsetzen",
+            "Noch einmal",
+            "Noch ein Training starten",
+            "Noch ein Training"
           ]
         },
         {
@@ -128,6 +131,22 @@
         {
           "name": "AMAZON.FallbackIntent",
           "samples": []
+        },
+        {
+          "name": "TrueFalseAnswerIntent",
+          "slots": [
+            {
+              "name": "TrueFalse",
+              "type": "TrueFalse"
+            }
+          ],
+          "samples": [
+            "Ich denke {TrueFalse}",
+            "Ich denke es ist {TrueFalse}",
+            "Die Antwort ist {TrueFalse}",
+            "{TrueFalse}",
+            "Es ist {TrueFalse}"
+          ]
         }
       ],
       "types": [
@@ -166,6 +185,30 @@
             }
           ],
           "name": "CourseName"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "falsch",
+                "synonyms": [
+                  "ungültig",
+                  "nicht korrekt",
+                  "unkorrekt"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "wahr",
+                "synonyms": [
+                  "richtig",
+                  "korrekt"
+                ]
+              }
+            }
+          ],
+          "name": "TrueFalse"
         }
       ],
       "modelConfiguration": {
@@ -175,5 +218,5 @@
       }
     }
   },
-  "version": "7"
+  "version": "9"
 }

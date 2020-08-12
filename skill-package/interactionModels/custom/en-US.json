@@ -89,7 +89,9 @@
             "Continue",
             "Resume",
             "Continue course",
-            "Resume course"
+            "Resume course",
+            "Train again",
+            "Again"
           ]
         },
         {
@@ -126,6 +128,22 @@
         {
           "name": "AMAZON.FallbackIntent",
           "samples": []
+        },
+        {
+          "name": "TrueFalseAnswerIntent",
+          "slots": [
+            {
+              "name": "TrueFalse",
+              "type": "TrueFalse"
+            }
+          ],
+          "samples": [
+            "I think {TrueFalse}",
+            "I think it is {TrueFalse}",
+            "The answer is {TrueFalse}",
+            "{TrueFalse}",
+            "It is {TrueFalse}"
+          ]
         }
       ],
       "types": [
@@ -158,6 +176,31 @@
             }
           ],
           "name": "CourseName"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "false",
+                "synonyms": [
+                  "invalid",
+                  "not correct",
+                  "incorrect",
+                  "wrong"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "true",
+                "synonyms": [
+                  "valid",
+                  "correct"
+                ]
+              }
+            }
+          ],
+          "name": "TrueFalse"
         }
       ],
       "modelConfiguration": {
@@ -167,5 +210,5 @@
       }
     }
   },
-  "version": "24"
+  "version": "32"
 }
