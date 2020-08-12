@@ -277,7 +277,7 @@ const ResumeCourseIntentHandler = {
             let introOutput = handlerInput.t("RESTART_COURSE_START_TRAINING", {
                 currentTrainingName: persistentAttributes.currentTrainingName
             });
-            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
+            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             speakOutput = handlerInput.t("ERROR_RESUME_COURSE_WRONG_STATE");
