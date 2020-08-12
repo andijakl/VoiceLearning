@@ -200,11 +200,7 @@
             },
             {
               "name": {
-                "value": "wahr",
-                "synonyms": [
-                  "richtig",
-                  "korrekt"
-                ]
+                "value": "wahr"
               }
             }
           ],
@@ -218,5 +214,5 @@
       }
     }
   },
-  "version": "12"
+  "version": "13"
 }
