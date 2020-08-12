@@ -1,6 +1,6 @@
 module.exports = {
     translation: {
-        WELCOME: "Hi and welcome to the learning asssistant! I can help you understand the most important concepts of your courses. First, please tell me your first name!",
+        WELCOME: "Hi and welcome to voice learning! I can help you understand the most important concepts of your courses. First, please tell me your first name!",
         WELCOME_REPROMPT: "Please tell me your first name.",
         WELCOME_PERSONALIZED: "Welcome back {{studentName}}! {{prompt}}",
         //WELCOME_PERSONALIZED: "Welcome back <alexa:name type='first' personId='{{personId}}' />! <break /> {{prompt}}",

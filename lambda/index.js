@@ -311,6 +311,12 @@ const YesNoIntentHandler = {
         let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
         
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+
+        // User doesn't want to continue with the skill - stop
+        if (repromptOutput === -1) {
+            // Stop the skill
+            return CancelAndStopIntentHandler.handle(handlerInput);
+        }
         
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -339,6 +345,7 @@ const NumericAnswerIntentHandler = {
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
+        // User doesn't want to continue with the skill - stop
         if (repromptOutput === -1) {
             // Stop the skill
             return CancelAndStopIntentHandler.handle(handlerInput);

@@ -1,6 +1,6 @@
 module.exports = {
     translation: {
-        WELCOME: "Hallo und Willkommmen beim Lern-Assistent! Ich kann dir helfen, die wichtigsten Konzepte deiner Kurse zu lernen. Zuerst, sag mir bitte deinen Vornamen!",
+        WELCOME: "Hallo und Willkommmen bei Voice Learning! Ich kann dir helfen, die wichtigsten Konzepte deiner Kurse zu lernen. Zuerst, sag mir bitte deinen Vornamen!",
         WELCOME_REPROMPT: "Please tell me your first name.",
         WELCOME_PERSONALIZED: "Willkommen zurück {{studentName}}! {{prompt}}",
         //WELCOME_PERSONALIZED: "Welcome back <alexa:name type='first' personId='{{personId}}' />! <break /> {{prompt}}",
@@ -11,7 +11,7 @@ module.exports = {
         SELECTED_COURSE_START_TRAINING: "Du hast den Kurs {{currentTrainingName}} gewählt. Legen wir los!",
         RESUMING_COURSE_START_TRAINING: "Setze den Kurs {{currentTrainingName}} fort.",
         RESTART_COURSE_START_TRAINING: "Wiederhole den Kurs {{currentTrainingName}}.",
-        HELP_PROMPT: "Ich bin dein Lern Assistent und stelle dir Fragen zu deinen Kursen, die dir helfen, dir die Inhalte zu merken. Das funktioniert wie ein Quiz!",
+        HELP_PROMPT: "Ich bin dein Voice Learning Assistent und stelle dir Fragen zu deinen Kursen, die dir helfen, dir die Inhalte zu merken. Das funktioniert wie ein Quiz!",
         GENERIC_REPROMPT: "Wie kann ich dir helfen?",
         YES: "Ja",
         NO: "Nein",
