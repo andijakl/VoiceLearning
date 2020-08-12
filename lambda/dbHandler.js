@@ -130,7 +130,7 @@ module.exports.logAnswerForUser = async function logAnswerForUser(userId, traini
     try {
         const db = connectToDb();
         const data = await db.update(params).promise();
-        console.log("Updated answer count: " + JSON.stringify(data));
+        //console.log("Updated answer count: " + JSON.stringify(data));
         return data.Item;
     } catch (err) {
         console.log("Error updating answer count in db: " + err.message);
@@ -150,7 +150,7 @@ module.exports.getAnswersForUser = async function getAnswersForUser(userId, trai
     try {
         const db = connectToDb();
         const data = await db.query(params).promise();
-        console.log("Got answers list: " + JSON.stringify(data.Items));
+        //console.log("Got answers list: " + JSON.stringify(data.Items));
         return data.Items;
     } catch (err) {
         console.log("Error getting answers list from db: " + err.message);

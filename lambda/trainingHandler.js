@@ -24,10 +24,10 @@ module.exports.selectTraining = async function selectTraining(userTrainingName, 
     // TODO: maybe change to for ... of to use break inside of loop?
     // https://stackoverflow.com/questions/3010840/loop-through-an-array-in-javascript
     trainingList.forEach((item) => {
-        console.log(`Comparing ${item.TrainingName.trim()} to ${userTrainingName.trim()}`);
+        //console.log(`Comparing ${item.TrainingName.trim()} to ${userTrainingName.trim()}`);
         if (item.TrainingName.trim().localeCompare(userTrainingName.trim(), undefined, { sensitivity: "accent" }) === 0) {
             // Found a match!
-            console.log(`Found a training match! Id: ${item.TrainingId}, name: ${item.TrainingName}`);
+            //console.log(`Found a training match! Id: ${item.TrainingId}, name: ${item.TrainingName}`);
             persistentAttributes.currentTrainingId = item.TrainingId;
             persistentAttributes.currentTrainingName = item.TrainingName;
             foundTraining = item;

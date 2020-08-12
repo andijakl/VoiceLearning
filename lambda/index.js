@@ -142,7 +142,7 @@ const ChooseCourseIntentHandler = {
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
-        console.log("User selected training: " + userTrainingName);
+        //console.log("User selected training: " + userTrainingName);
 
         if (userTrainingName === undefined || userTrainingName === null) {
             speakOutput = handlerInput.t("ERROR_COURSE_NOT_UNDERSTOOD");
