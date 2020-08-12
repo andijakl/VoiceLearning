@@ -17,13 +17,14 @@ module.exports.initializeUser = function(sessionAttributes, persistentAttributes
     sessionAttributes.state = config.states.STUDENT_NAME;
 };
 
-module.exports.selectTraining = async function selectTraining(userTrainingName, persistentAttributes) {
+module.exports.selectTraining = async function selectTraining(userTrainingName, persistentAttributes, language) {
     // Match user training name from intent slot with available trainings in the DB
-    const trainingList = await dbHandler.getTrainingList();
+    const trainingList = await dbHandler.getTrainingList(language);
     let foundTraining = null;
     // TODO: maybe change to for ... of to use break inside of loop?
     // https://stackoverflow.com/questions/3010840/loop-through-an-array-in-javascript
     trainingList.forEach((item) => {
+        console.log(`Comparing ${item.TrainingName.trim()} to ${userTrainingName.trim()}`);
         if (item.TrainingName.trim().localeCompare(userTrainingName.trim(), undefined, { sensitivity: "accent" }) === 0) {
             // Found a match!
             console.log(`Found a training match! Id: ${item.TrainingId}, name: ${item.TrainingName}`);
@@ -90,8 +91,8 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
         // Not in training
         // TODO: provide instructions on what to do
         speakOutput = handlerInput.t("ERROR_NOT_IN_TRAINING_MODE");
-        if (persistentAttributes.repromptOutput !== null) {
-            speakOutput += " " + persistentAttributes.repromptOutput;
+        if (sessionAttributes.repromptOutput !== null) {
+            speakOutput += " " + sessionAttributes.repromptOutput;
         }
     }
 
@@ -136,8 +137,8 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
         // Not in training
         // TODO: provide instructions on what to do
         speakOutput = handlerInput.t("ERROR_NOT_IN_TRAINING_MODE");
-        if (persistentAttributes.repromptOutput !== null) {
-            speakOutput += " " + persistentAttributes.repromptOutput;
+        if (sessionAttributes.repromptOutput !== null) {
+            speakOutput += " " + sessionAttributes.repromptOutput;
         }
     }
 

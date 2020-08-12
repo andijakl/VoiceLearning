@@ -39,7 +39,7 @@ const LaunchRequestHandler = {
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
         // Reset saved reprompt output
-        persistentAttributes.repromptOutput = null;
+        sessionAttributes.repromptOutput = null;
 
         if (persistentAttributes.studentName) {
             // TODO: Check if there is a course to resume!
@@ -93,9 +93,9 @@ const StudentNameIntentHandler = {
         {
             // TODO handle case where we did not ask for the name
             speakOutput = handlerInput.t("ERROR_STUDENT_NAME_WHEN_NOT_EXPECTED");
-            if (persistentAttributes.repromptOutput !== null) {
-                speakOutput += " " + persistentAttributes.repromptOutput;
-                repromptOutput = persistentAttributes.repromptOutput;
+            if (sessionAttributes.repromptOutput !== null) {
+                speakOutput += " " + sessionAttributes.repromptOutput;
+                repromptOutput = sessionAttributes.repromptOutput;
             }
         } else {
             // Update attributes
@@ -153,7 +153,7 @@ const ChooseCourseIntentHandler = {
             speakOutput += " " + repromptOutput;
         } else {
             // Match slot value with available courses and get its ID from the DB
-            const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes);
+            const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes, getMainLanguage());
             if (selectedTrainingInfo !== null) {
                 // Training selected successfully
                 let introOutput = handlerInput.t("SELECTED_COURSE_START_TRAINING", {
@@ -218,7 +218,8 @@ const ListCoursesIntentHandler = {
         let repromptOutput = null;
 
         // Get attributes
-        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
    
         const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
         speakOutput = handlerInput.t("AVAILABLE_COURSES_LIST", {
@@ -226,7 +227,7 @@ const ListCoursesIntentHandler = {
         });
 
         // Keep reprompt output from previous question
-        repromptOutput = persistentAttributes.repromptOutput;
+        repromptOutput = sessionAttributes.repromptOutput;
 
         speakOutput += " " + repromptOutput;
         
@@ -265,16 +266,16 @@ const ResumeCourseIntentHandler = {
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 speakOutput = handlerInput.t("ERROR_RESUME_NO_COURSE_STARTED");
-                if (persistentAttributes.repromptOutput !== null) {
-                    speakOutput += " " + persistentAttributes.repromptOutput;
-                    repromptOutput = persistentAttributes.repromptOutput;
+                if (sessionAttributes.repromptOutput !== null) {
+                    speakOutput += " " + sessionAttributes.repromptOutput;
+                    repromptOutput = sessionAttributes.repromptOutput;
                 }
             }
         } else {
             speakOutput = handlerInput.t("ERROR_RESUME_COURSE_WRONG_STATE");
-            if (persistentAttributes.repromptOutput !== null) {
-                speakOutput += " " + persistentAttributes.repromptOutput;
-                repromptOutput = persistentAttributes.repromptOutput;
+            if (sessionAttributes.repromptOutput !== null) {
+                speakOutput += " " + sessionAttributes.repromptOutput;
+                repromptOutput = sessionAttributes.repromptOutput;
             }
         }
         
@@ -369,7 +370,7 @@ async function saveAttributes(speakOutput, repromptOutput, sessionAttributes, pe
     }
 
     // Save state
-    persistentAttributes.repromptOutput = repromptOutput;
+    sessionAttributes.repromptOutput = repromptOutput;
     handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
     await handlerInput.attributesManager.savePersistentAttributes();
     handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
@@ -417,11 +418,12 @@ const HelpIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent";
     },
     async handle(handlerInput) {
-        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const speakOutput = handlerInput.t("HELP_PROMPT");
         let repromptOutput = handlerInput.t("GENERIC_REPROMPT");
-        if (persistentAttributes.repromptOutput !== null) {
-            repromptOutput = persistentAttributes.repromptOutput;
+        if (sessionAttributes.repromptOutput !== null) {
+            repromptOutput = sessionAttributes.repromptOutput;
         }
 
         return handlerInput.responseBuilder
@@ -465,7 +467,7 @@ const FallbackIntentHandler = {
         let repromptOutput = null;
         
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
 
         console.log(`In fallback handler for ${intentName}. Game state: ${sessionAttributes.state}.`);
@@ -477,8 +479,8 @@ const FallbackIntentHandler = {
         } else {
             speakOutput = handlerInput.t("FALLBACK_GENERIC");
         }
-        if (persistentAttributes.repromptOutput !== null) {
-            repromptOutput = persistentAttributes.repromptOutput;
+        if (sessionAttributes.repromptOutput !== null) {
+            repromptOutput = sessionAttributes.repromptOutput;
             speakOutput += " " + repromptOutput;
         } else {
             repromptOutput = speakOutput;

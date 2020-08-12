@@ -39,7 +39,7 @@ module.exports.getTrainingList = async function getTrainingList(language) {
                 delete trainingItems[key];
             }
         }
-        //console.log("cleaned list: " + JSON.stringify(trainingItems));
+        //console.log("List of available trainings for language " + language + ": " + JSON.stringify(trainingItems));
         return trainingItems;
     } catch (err) {
         console.log("Error getting data from db: " + err.message);
@@ -92,7 +92,6 @@ module.exports.getQuestion = async function getQuestion(trainingId, questionId, 
     try {
         const db = connectToDb();
         let data = await db.get(params).promise();
-        // TODO get question in provided language
         // Overwrite question text with locale specific version if available
         const localeQuestionKey = "QuestionText-" + language;
         if (data.Item[localeQuestionKey]) {
