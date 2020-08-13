@@ -28,6 +28,7 @@
             }
           ],
           "samples": [
+            "{StudentName}",
             "Mein Vorname ist {StudentName}",
             "Ich bin {StudentName}",
             "Nenne mich {StudentName}",
@@ -214,5 +215,5 @@
       }
     }
   },
-  "version": "13"
+  "version": "15"
 }

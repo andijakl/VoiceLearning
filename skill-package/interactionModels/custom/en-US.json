@@ -28,6 +28,7 @@
             }
           ],
           "samples": [
+            "{StudentName}",
             "My first name is {StudentName}",
             "I'm {StudentName}",
             "Call me {StudentName}",
@@ -209,5 +210,5 @@
       }
     }
   },
-  "version": "36"
+  "version": "37"
 }
