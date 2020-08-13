@@ -194,8 +194,7 @@
               "name": {
                 "value": "true",
                 "synonyms": [
-                  "valid",
-                  "correct"
+                  "valid"
                 ]
               }
             }
@@ -210,5 +209,5 @@
       }
     }
   },
-  "version": "34"
+  "version": "36"
 }
