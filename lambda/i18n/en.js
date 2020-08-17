@@ -28,7 +28,7 @@ module.exports = {
         DELETE_DATA_CONFIRMED: "I have deleted your personal data. Please start the skill again if you would like to train again. See you next time!",
         FALLBACK_WHILE_TRAINING: "I can't do that while you're in the middle of a training. Plese finish your training first!",
         FALLBACK_WHILE_NAME: "I can'd do that right now. Please tell me your name first.",
-        FALLBACK_GENERIC: "I can'd do that right now.",
+        FALLBACK_GENERIC: "I can't do that right now.",
         ERROR_NOT_IN_TRAINING_MODE: "You are currently not in training mode.",
         ERROR_COURSE_NOT_UNDERSTOOD: "Sorry, I did not get which course you would like to start. Please try again!",
         ERROR_COURSE_NOT_FOUND: "Sorry, I was unable to match your selection {{userTrainingName}} to any of the available trainings. Please try again or contact the skill administrators!",

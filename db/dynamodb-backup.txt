@@ -1,0 +1,8 @@
+Using AWS CLI:
+aws dynamodb scan --table-name LearningAssistantQuestions --output json > LearningAssistantQuestions.json
+aws dynamodb scan --table-name LearningAssistantTrainings --output json > LearningAssistantQuestions.json
+
+Using https://github.com/bchew/dynamodump:
+(Includes structure)
+python dynamodump.py -m backup -r eu-west-1 -s LearningAssistantQuestions
+python dynamodump.py -m backup -r eu-west-1 -s LearningAssistantTrainings
