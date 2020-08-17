@@ -4,7 +4,7 @@
 
 const Alexa = require("ask-sdk-core");
 //const AWS = require("aws-sdk");
-//const util  = require("./util");
+const util  = require("./util");
 const i18next = require("i18next"); 
 //const sprintf = require("i18next-sprintf-postprocessor"); 
 const sprintf       = require("sprintf-js").sprintf;
@@ -23,6 +23,11 @@ const languageStrings = {
     "de" : require("./i18n/de"),
 };
 
+// APL
+const helloworldDocument = require("./apl_welcome.json");
+
+// Tokens used when sending the APL directives
+const HELLO_WORLD_TOKEN = "helloworldToken";
 
 // -------------------------------------------------------------------
 // Launch intent handler
@@ -32,6 +37,7 @@ const LaunchRequestHandler = {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "LaunchRequest";
     },
     async handle(handlerInput) {
+        let responseBuilder = handlerInput.responseBuilder;
         let speakOutput = null;
         let repromptOutput = null;
 
@@ -58,8 +64,25 @@ const LaunchRequestHandler = {
         }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+        
+        if (Alexa.getSupportedInterfaces(handlerInput.requestEnvelope)["Alexa.Presentation.APL"]){
+            console.log("APL is supported");
+            // Add the RenderDocument directive to the responseBuilder
+            responseBuilder.addDirective({
+                type: "Alexa.Presentation.APL.RenderDocument",
+                token: HELLO_WORLD_TOKEN,
+                document: helloworldDocument
+            });
+            
+            // Tailor the speech for a device with a screen.
+            speakOutput += " You should now also see my greeting on the screen.";
+        } else {
+            console.log("APL is NOT supported");
+            // User's device does not support APL, so tailor the speech to this situation
+            speakOutput += " This example would be more interesting on a device with a screen, such as an Echo Show or Fire TV.";
+        }
 
-        return handlerInput.responseBuilder
+        return responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
             .getResponse();

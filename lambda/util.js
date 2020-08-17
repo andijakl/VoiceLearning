@@ -51,3 +51,38 @@ module.exports.getApiSlots = (handlerInput) => {
         return false;
     }
 };
+
+module.exports.isAplSupported = function isAplSupported(handlerInput) {
+    return Alexa.getSupportedInterfaces(handlerInput.requestEnvelope)["Alexa.Presentation.APL"];
+};
+
+module.exports.addAplIfSupported = function addAplIfSupported(handlerInput, token, document, data = {}) {
+    if (module.exports.isAplSupported(handlerInput)) {
+        handlerInput.responseBuilder
+            .addDirective({
+                "type": "Alexa.Presentation.APL.RenderDocument",
+                "token": token,
+                "document": document,
+                "datasources": {
+                    "data": {
+                        "type": "object",
+                        "properties": data
+                    }
+                }
+            });
+    }
+};
+
+module.exports.getAplADirective = function getAplADirective(token, document, data = {}) {
+    return {
+        "type": "Alexa.Presentation.APLA.RenderDocument",
+        "token": token,
+        "document": document,
+        "datasources": {
+            "data": {
+                "type": "object",
+                "properties": data
+            }
+        }
+    };
+};
