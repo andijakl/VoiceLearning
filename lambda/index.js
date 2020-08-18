@@ -144,6 +144,62 @@ const StudentNameIntentHandler = {
     }
 };
 
+
+const StartTrainingApiHandler = {
+    canHandle(handlerInput) {
+        return util.isApiRequest(handlerInput, "StartTraining");
+    },
+    async handle(handlerInput) {
+        console.log("Api Request [StartTraining]: ", JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
+        
+        // Get attributes
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        //const userId = Alexa.getUserId(handlerInput.requestEnvelope);
+        
+        // First get our request entity and grab the color passed in the API call
+        const args = util.getApiArguments(handlerInput);
+        const userTrainingName = args.courseNameArgument;
+
+        // Match slot value with available courses and get its ID from the DB
+        const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes, getMainLanguage());
+        if (selectedTrainingInfo !== null) {
+            // Training selected successfully
+            console.log("Found training!");
+            // let introOutput = handlerInput.t("SELECTED_COURSE_START_TRAINING", {
+            //     currentTrainingName: persistentAttributes.currentTrainingName
+            // });
+            // // Get question
+            // ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
+            // speakOutput = introOutput + " " + speakOutput;
+        } else {
+            // Unable to match slot to training in DB
+            console.log("Unable to match slot to training in DB");
+            // speakOutput = handlerInput.t("ERROR_COURSE_NOT_FOUND", {
+            //     userTrainingName: userTrainingName
+            // });
+            // const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
+            // repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
+            //     availableTrainings: availableTrainings
+            // });
+            // speakOutput += " " + repromptOutput;
+        }
+        
+        let response = {
+            apiResponse: {
+                returnedCoursesProperty : persistentAttributes.currentTrainingName
+            }
+        };
+        
+        handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
+        await handlerInput.attributesManager.savePersistentAttributes();
+        handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+        
+        console.log("Api Response [StartTraining]: ", JSON.stringify(response, null, 2));
+        return response;
+    }
+};
+
 const ChooseCourseIntentHandler = {
     canHandle(handlerInput) {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
@@ -208,26 +264,26 @@ const ChooseCourseIntentHandler = {
     }
 };
 
-// const ListTrainingsApiHandler = {
-//     canHandle(handlerInput) {
-//         return util.isApiRequest(handlerInput, "ListTrainings");
-//     },
-//     async handle(handlerInput) {
-//         console.log("Api Request [RecordColor]: ", JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
-//         // First get our request entity and grab the color passed in the API call
-//         //const args = util.getApiArguments(handlerInput);
-//         //const color = args.color;
-//         const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
+const ListTrainingsApiHandler = {
+    canHandle(handlerInput) {
+        return util.isApiRequest(handlerInput, "ListTrainings");
+    },
+    async handle(handlerInput) {
+        console.log("Api Request [ListTrainings]: ", JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
+        // First get our request entity and grab the color passed in the API call
+        //const args = util.getApiArguments(handlerInput);
+        //const color = args.color;
+        const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
 
-//         let response = {
-//             apiResponse: {
-//                 CourseNameProperty : availableTrainings
-//             }
-//         };
-//         console.log("Api Response [ListTrainings]: ", JSON.stringify(response, null, 2));
-//         return response;
-//     }
-// };
+        let response = {
+            apiResponse: {
+                returnedCoursesProperty : availableTrainings
+            }
+        };
+        console.log("Api Response [ListTrainings]: ", JSON.stringify(response, null, 2));
+        return response;
+    }
+};
 
 const ListCoursesIntentHandler = {
     canHandle(handlerInput) {
@@ -253,6 +309,26 @@ const ListCoursesIntentHandler = {
         repromptOutput = sessionAttributes.repromptOutput;
 
         speakOutput += " " + repromptOutput;
+
+        // TODO: Hand over to Alexa Conversations
+        if (i18next.language === "en-US") {
+            console.log("Handing over to Alexa Conversations");
+            return handlerInput.responseBuilder
+                .addDirective({
+                    type: "Dialog.DelegateRequest",
+                    target: "AMAZON.Conversations",
+                    period: {
+                        until: "EXPLICIT_RETURN" 
+                    },
+                    updatedRequest: {
+                        type: "Dialog.InputRequest",
+                        input: {
+                            name: "ListTrainings"
+                        }
+                    }
+                })
+                .getResponse();
+        } 
         
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -638,7 +714,8 @@ exports.handler = Alexa.SkillBuilders.custom()
         // Launch
         LaunchRequestHandler,
         // Alexa Converstaions
-        //ListTrainingsApiHandler,
+        ListTrainingsApiHandler,
+        StartTrainingApiHandler,
         // Config
         StudentNameIntentHandler,
         // Training

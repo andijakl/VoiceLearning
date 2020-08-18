@@ -118,6 +118,8 @@
             "Start another training",
             "Start another course",
             "What trainings can i do",
+            "List available courses",
+            "List courses",
             "Which trainings are available",
             "What can I do",
             "Which courses can I do",
@@ -210,5 +212,5 @@
       }
     }
   },
-  "version": "39"
+  "version": "48"
 }
