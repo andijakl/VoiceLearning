@@ -142,3 +142,10 @@ const ListTrainingsApiHandler = {
         return response;
     }
 };
+
+
+module.exports = {
+    SetFirstNameApiHandler,
+    StartTrainingApiHandler,
+    ListTrainingsApiHandler
+}

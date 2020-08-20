@@ -21,10 +21,10 @@ const languageStrings = {
 };
 
 // APL
-const aplWelcomeDocument = require("./apl_welcome.json");
+//const aplWelcomeDocument = require("./apl_welcome.json");
 
 // Tokens used when sending the APL directives
-const APL_TOKEN_WELCOME = "welcomeToken";
+//const APL_TOKEN_WELCOME = "welcomeToken";
 
 // -------------------------------------------------------------------
 // Launch intent handler
@@ -65,31 +65,30 @@ const LaunchRequestHandler = {
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
         
-        if (Alexa.getSupportedInterfaces(handlerInput.requestEnvelope)["Alexa.Presentation.APL"]){
-            console.log("APL is supported");
-            // Add the RenderDocument directive to the responseBuilder
-            responseBuilder.addDirective({
-                type: "Alexa.Presentation.APL.RenderDocument",
-                token: APL_TOKEN_WELCOME,
-                document: aplWelcomeDocument,
-                datasources: {
-                    data: {
-                        text: {
-                            //type: "object",
-                            welcomeMessage: speakOutput
-                        }
-                    }
-                }
-            });
-            
-            // Tailor the speech for a device with a screen.
-            //speakOutput += " You should now also see my greeting on the screen.";
-        } else {
-            console.log("APL is NOT supported");
-            // User's device does not support APL, so tailor the speech to this situation
-            //speakOutput += " This example would be more interesting on a device with a screen, such as an Echo Show or Fire TV.";
-        }
+        // TODO: Define nice looking APL
+        // if (Alexa.getSupportedInterfaces(handlerInput.requestEnvelope)["Alexa.Presentation.APL"]){
+        //     console.log("APL is supported");
+        //     // Add the RenderDocument directive to the responseBuilder
+        //     responseBuilder.addDirective({
+        //         type: "Alexa.Presentation.APL.RenderDocument",
+        //         token: APL_TOKEN_WELCOME,
+        //         document: aplWelcomeDocument,
+        //         datasources: {
+        //             data: {
+        //                 text: {
+        //                     //type: "object",
+        //                     welcomeMessage: speakOutput
+        //                 }
+        //             }
+        //         }
+        //     });
+        // } else {
+        //     // User's device does not support APL
+        //     console.log("APL is NOT supported");
+        // }
 
+        // TODO: Alexa Conversations crashes without meaningful error message when doing this.
+        // Therefore, not using Alexa Conversations for now.
         // if (startAlexaConversationsDialog) {
         //     // TODO: Hand over to Alexa Conversations
         //     if (i18next.language === "en-US") {
