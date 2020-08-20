@@ -1,7 +1,7 @@
 {
     "type": "APL",
     "version": "1.4",
-    "description": "A simple hello world APL document.",
+    "description": "Welcome to Voice Learning.",
     "settings": {},
     "theme": "dark",
     "import": [],
@@ -21,7 +21,7 @@
           "height": "100vh",
           "textAlign": "center",
           "textAlignVertical": "center",
-          "text": "Hello World!"
+          "text": "${data.text.welcomeMessage}"
         }
       ]
     }

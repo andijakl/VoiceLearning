@@ -14,7 +14,13 @@
                     {
                         "type": "Speech",
                         "contentType": "text",
-                        "content": "I have the following courses available: a ${payload.returnedCourses} or b ${payload.returnedCourses.returnedCoursesProperty} or c ${payload.returnedCourses.CourseNameProperty}",
+                        "content": "I have the following courses available: ${payload.returnedCourses.returnedCoursesProperty}",
+                        "description": "Expand on 'items' array to add multiple prompts, use response template arguments by adding it to 'content' like this ${payload.input_argument_name} and add SSML by changing 'contentType' to 'SSML' and adding SSML to 'content' <amazon:effect name=\"whispered\">like that</amazon:effect>"
+                    },
+                    {
+                        "type": "Speech",
+                        "contentType": "text",
+                        "content": "These courses are available:  ${payload.returnedCourses.returnedCoursesProperty}",
                         "description": "Expand on 'items' array to add multiple prompts, use response template arguments by adding it to 'content' like this ${payload.input_argument_name} and add SSML by changing 'contentType' to 'SSML' and adding SSML to 'content' <amazon:effect name=\"whispered\">like that</amazon:effect>"
                     }
                 ]

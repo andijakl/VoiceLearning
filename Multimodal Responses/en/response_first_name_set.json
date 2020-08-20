@@ -14,13 +14,7 @@
                     {
                         "type": "Speech",
                         "contentType": "text",
-                        "content": "Sure, which course would you like to start?",
-                        "description": "Expand on 'items' array to add multiple prompts, use response template arguments by adding it to 'content' like this ${payload.input_argument_name} and add SSML by changing 'contentType' to 'SSML' and adding SSML to 'content' <amazon:effect name=\"whispered\">like that</amazon:effect>"
-                    },
-                    {
-                        "type": "Speech",
-                        "contentType": "text",
-                        "content": "Which course would you like to start?",
+                        "content": "Welcome ${payload.returned.firstName}! You can now start your first training. Which of these courses would you like to start: ${payload.returned.courseList}.",
                         "description": "Expand on 'items' array to add multiple prompts, use response template arguments by adding it to 'content' like this ${payload.input_argument_name} and add SSML by changing 'contentType' to 'SSML' and adding SSML to 'content' <amazon:effect name=\"whispered\">like that</amazon:effect>"
                     }
                 ]

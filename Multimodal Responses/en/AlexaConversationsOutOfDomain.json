@@ -14,7 +14,13 @@
                     {
                         "type": "Speech",
                         "contentType": "text",
-                        "content": "Sorry, I can't help you with that.",
+                        "content": "Sorry, I can't help you with that right now.",
+                        "description": "Expand on 'items' array to add multiple prompts, use response template arguments by adding it to 'content' like this ${payload.input_argument_name} and add SSML by changing 'contentType' to 'SSML' and adding SSML to 'content' <amazon:effect name=\"whispered\">like that</amazon:effect>"
+                    },
+                    {
+                        "type": "Speech",
+                        "contentType": "text",
+                        "content": "Sorry, I can't do that right now.",
                         "description": "Expand on 'items' array to add multiple prompts, use response template arguments by adding it to 'content' like this ${payload.input_argument_name} and add SSML by changing 'contentType' to 'SSML' and adding SSML to 'content' <amazon:effect name=\"whispered\">like that</amazon:effect>"
                     }
                 ]
