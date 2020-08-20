@@ -3,8 +3,8 @@
 const config = require("./config.js");
 const util  = require("./util");
 const dbHandler = require("./dbHandler.js");
+const trainingHandler = require("./trainingHandler.js");
 
-// TODO: Export functions
 // TODO: bring getMainLanguage() to util.
 
 const SetFirstNameApiHandler = {
@@ -148,4 +148,4 @@ module.exports = {
     SetFirstNameApiHandler,
     StartTrainingApiHandler,
     ListTrainingsApiHandler
-}
+};
