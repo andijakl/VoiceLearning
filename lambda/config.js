@@ -10,5 +10,5 @@ module.exports = {
         YES_NO:  1,
         NUMERIC: 2
     },
-    numQuestionsPerTraining: 3
+    numQuestionsPerTraining: 7
 };
