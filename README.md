@@ -8,6 +8,14 @@ The Voice Learning skill will ask you key questions and concepts, either as yes/
 
 The skill was specifically developed for the University of Applied Sciences in St. Pölten, Austria. It contains questions for several of our courses. However, its code is completely open source - so it's easy for other universities or companies to adapt it to their own needs and feed in their own content!
 
+## Alexa Skill Download
+
+The current beta version of the skill is online and can be installed on any Alexa-compatible device:
+
+[Voice Learning at Amazon.de](https://www.amazon.de/Voice-Learning-FH-St-Pölten/dp/B08GFPC1VB) (German)
+[Voice Learning at Amazon.com](https://www.amazon.com/Voice-Learning-St-Pölten-UAS/dp/B08GFPC1VB) (English)
+
+
 ## Setup instructions
 
 Coming soon!
