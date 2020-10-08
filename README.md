@@ -12,8 +12,8 @@ The skill was specifically developed for the University of Applied Sciences in S
 
 The current beta version of the skill is online and can be installed on any Alexa-compatible device:
 
-[Voice Learning at Amazon.de](https://www.amazon.de/Voice-Learning-FH-St-Pölten/dp/B08GFPC1VB) (German)
-[Voice Learning at Amazon.com](https://www.amazon.com/Voice-Learning-St-Pölten-UAS/dp/B08GFPC1VB) (English)
+* [Voice Learning at Amazon.de](https://www.amazon.de/Voice-Learning-FH-St-Pölten/dp/B08GFPC1VB) (German)
+* [Voice Learning at Amazon.com](https://www.amazon.com/Voice-Learning-St-Pölten-UAS/dp/B08GFPC1VB) (English)
 
 
 ## Setup instructions
