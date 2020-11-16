@@ -5,7 +5,7 @@ const dbHandler = require("./dbHandler.js");
 // -------------------------------------------------------------------
 // Active training handler functions
 
-module.exports.initializeUser = function(sessionAttributes, persistentAttributes) {
+module.exports.initializeUser = function (sessionAttributes, persistentAttributes) {
     persistentAttributes.currentTrainingId = null;
     persistentAttributes.currentTrainingName = null;
     persistentAttributes.startedTrainings = 0;
@@ -34,7 +34,7 @@ module.exports.selectTraining = async function selectTraining(userTrainingName, 
             // Note: return inside forEach doesn't exit the loop - would need to switch to other loop type!
         }
     });
-    
+
     return foundTraining;
 };
 
@@ -72,7 +72,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
             introOutput += " ";
             // Yes/No is a valid answer - check if correct.
             introOutput += await answerIsYesNoCorrect(isYes, userId, sessionAttributes, persistentAttributes, handlerInput);
-            ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language));
+            ({ speakOutput, repromptOutput } = await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language));
             speakOutput = introOutput + " " + speakOutput;
         }
     } else if (sessionAttributes.state === config.states.FINISHED) {
@@ -80,7 +80,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
             let introOutput = handlerInput.t("RESTART_COURSE_START_TRAINING", {
                 currentTrainingName: persistentAttributes.currentTrainingName
             });
-            ({speakOutput, repromptOutput} = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, language));
+            ({ speakOutput, repromptOutput } = await module.exports.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, language));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             // Finished training and user doesn't want to restart
@@ -123,7 +123,7 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
                 });
                 introOutput += " ";
                 introOutput += await answerIsNumericCorrect(answerAsInt, userId, sessionAttributes, persistentAttributes, handlerInput);
-                ({speakOutput, repromptOutput} = await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language));
+                ({ speakOutput, repromptOutput } = await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
@@ -140,6 +140,34 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
         if (sessionAttributes.repromptOutput !== null) {
             speakOutput += " " + sessionAttributes.repromptOutput;
         }
+    }
+
+    return { speakOutput, repromptOutput };
+};
+
+
+module.exports.handleFallbackIntent = async function handleFallbackIntent(isInFallback, handlerInput, intentName) {
+    let speakOutput = null;
+    let repromptOutput = null;
+
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+
+    let consoleOutput = (isInFallback) ? "Fallback: " : "Reflector: ";
+    console.log(`${consoleOutput} for ${intentName}. State: ${sessionAttributes.state}.`);
+    //const speakOutput = `Fallback handler for ${intentName}`;
+    if (sessionAttributes.state === config.states.TRAINING) {
+        speakOutput = handlerInput.t("FALLBACK_WHILE_TRAINING");
+    } else if (sessionAttributes.state == config.states.STUDENT_NAME) {
+        speakOutput = handlerInput.t("FALLBACK_WHILE_NAME");
+    } else {
+        speakOutput = handlerInput.t("FALLBACK_GENERIC");
+    }
+    if (sessionAttributes.repromptOutput !== null) {
+        repromptOutput = sessionAttributes.repromptOutput;
+        speakOutput += " " + repromptOutput;
+    } else {
+        repromptOutput = speakOutput;
     }
 
     return { speakOutput, repromptOutput };
@@ -163,10 +191,10 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
         repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
         speakOutput += " " + repromptOutput;
     } else {
-        ({speakOutput, repromptOutput} = await getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language));
+        ({ speakOutput, repromptOutput } = await getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language));
     }
 
-    return {speakOutput, repromptOutput};
+    return { speakOutput, repromptOutput };
 }
 
 
@@ -196,7 +224,7 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
         // Update session variables
         sessionAttributes.questionNumber += 1;
         persistentAttributes.totalQuestionsAsked += 1;
-    
+
         // Get question text
         const introText = handlerInput.t("TRAINING_QUESTION_INTRO", {
             questionNumber: sessionAttributes.questionNumber
@@ -210,7 +238,7 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
             // Parse possible answers
             questionData.QuestionText += convertPossibleAnswersForSpeech(questionData.PossibleAnswers);
         }
-    
+
         // Store new question data
         sessionAttributes.questionId = questionData.QuestionId;
         sessionAttributes.questionType = questionData.QuestionType;
@@ -218,12 +246,12 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
         sessionAttributes.questionText = questionData.QuestionText;
         sessionAttributes.possibleAnswers = questionData.PossibleAnswers;
         sessionAttributes.questionsAskedThisSession.push(questionData.QuestionId);
-    
+
         speakOutput = introText + sessionAttributes.questionText;
         repromptOutput = sessionAttributes.questionText;
     }
 
-    return {speakOutput, repromptOutput};
+    return { speakOutput, repromptOutput };
 }
 
 function convertPossibleAnswersForSpeech(possibleAnswersString) {
@@ -231,7 +259,7 @@ function convertPossibleAnswersForSpeech(possibleAnswersString) {
     let speakText = "";
     for (const [i, curAnswerText] of possibleAnswers.entries()) {
         speakText += (i > 0) ? ", " : " ";
-        speakText += `${i+1}: ${curAnswerText}`;
+        speakText += `${i + 1}: ${curAnswerText}`;
     }
     speakText += ".";
     return speakText;
@@ -239,7 +267,7 @@ function convertPossibleAnswersForSpeech(possibleAnswersString) {
 
 function getTextForPossibleAnswer(answerId, possibleAnswersString) {
     const possibleAnswers = possibleAnswersString.split("|");
-    return possibleAnswers[answerId-1];
+    return possibleAnswers[answerId - 1];
 }
 
 async function getBestNextQuestion(userId, trainingId, completeQuestionList, questionsAskedThisSession, language) {

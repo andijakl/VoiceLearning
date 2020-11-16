@@ -5,19 +5,19 @@
 const Alexa = require("ask-sdk-core");
 //const AWS = require("aws-sdk");
 //const util  = require("./util");
-const i18next = require("i18next"); 
+const i18next = require("i18next");
 //const sprintf = require("i18next-sprintf-postprocessor"); 
-const sprintf       = require("sprintf-js").sprintf;
+const sprintf = require("sprintf-js").sprintf;
 const { DynamoDbPersistenceAdapter } = require("ask-sdk-dynamodb-persistence-adapter");
 // eslint-disable-next-line no-undef
-const persistenceAdapter = new DynamoDbPersistenceAdapter({ tableName : process.env.DYNAMODB_TABLE_NAME });
+const persistenceAdapter = new DynamoDbPersistenceAdapter({ tableName: process.env.DYNAMODB_TABLE_NAME });
 const config = require("./config.js");
 const trainingHandler = require("./trainingHandler.js");
 const dbHandler = require("./dbHandler.js");
 
 const languageStrings = {
-    "en" : require("./i18n/en"),
-    "de" : require("./i18n/de"),
+    "en": require("./i18n/en"),
+    "de": require("./i18n/de"),
 };
 
 // APL
@@ -52,7 +52,7 @@ const LaunchRequestHandler = {
                 studentName: persistentAttributes.studentName,
                 prompt: speakQuestion
             });
-            repromptOutput = speakQuestion; 
+            repromptOutput = speakQuestion;
             sessionAttributes.state = config.states.CHOOSE_COURSE;
             //startAlexaConversationsDialog = "StartTraining";
         } else {
@@ -64,7 +64,7 @@ const LaunchRequestHandler = {
         }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
-        
+
         // TODO: Define nice looking APL
         // if (Alexa.getSupportedInterfaces(handlerInput.requestEnvelope)["Alexa.Presentation.APL"]){
         //     console.log("APL is supported");
@@ -143,8 +143,7 @@ const StudentNameIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        if (sessionAttributes.state !== config.states.STUDENT_NAME)
-        {
+        if (sessionAttributes.state !== config.states.STUDENT_NAME) {
             // TODO handle case where we did not ask for the name
             speakOutput = handlerInput.t("ERROR_STUDENT_NAME_WHEN_NOT_EXPECTED");
             if (sessionAttributes.repromptOutput !== null) {
@@ -155,7 +154,7 @@ const StudentNameIntentHandler = {
             // Update attributes
             sessionAttributes.state = config.states.CHOOSE_COURSE;
             persistentAttributes.studentName = studentName;
-            
+
             const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
             speakOutput = handlerInput.t("AVAILABLE_COURSES", {
                 studentName: studentName,
@@ -215,7 +214,7 @@ const ChooseCourseIntentHandler = {
                     currentTrainingName: persistentAttributes.currentTrainingName
                 });
                 // Get question
-                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
+                ({ speakOutput, repromptOutput } = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 // Unable to match slot to training in DB
@@ -230,7 +229,7 @@ const ChooseCourseIntentHandler = {
             }
         }
 
-        
+
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
         return handlerInput.responseBuilder
@@ -255,7 +254,7 @@ const ListCoursesIntentHandler = {
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-   
+
         const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
         speakOutput = handlerInput.t("AVAILABLE_COURSES_LIST", {
             availableTrainings: availableTrainings
@@ -265,7 +264,7 @@ const ListCoursesIntentHandler = {
         repromptOutput = sessionAttributes.repromptOutput;
 
         speakOutput += " " + repromptOutput;
-        
+
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -290,14 +289,13 @@ const ResumeCourseIntentHandler = {
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
-        if (sessionAttributes.state === config.states.CHOOSE_COURSE)
-        {
+        if (sessionAttributes.state === config.states.CHOOSE_COURSE) {
             if (persistentAttributes.currentTrainingName !== null) {
                 // Able to resume
                 let introOutput = handlerInput.t("RESUMING_COURSE_START_TRAINING", {
                     currentTrainingName: persistentAttributes.currentTrainingName
                 });
-                ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
+                ({ speakOutput, repromptOutput } = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
                 speakOutput = handlerInput.t("ERROR_RESUME_NO_COURSE_STARTED");
@@ -312,7 +310,7 @@ const ResumeCourseIntentHandler = {
             let introOutput = handlerInput.t("RESTART_COURSE_START_TRAINING", {
                 currentTrainingName: persistentAttributes.currentTrainingName
             });
-            ({speakOutput, repromptOutput} = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
+            ({ speakOutput, repromptOutput } = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
             speakOutput = introOutput + " " + speakOutput;
         } else {
             speakOutput = handlerInput.t("ERROR_RESUME_COURSE_WRONG_STATE");
@@ -321,7 +319,7 @@ const ResumeCourseIntentHandler = {
                 repromptOutput = sessionAttributes.repromptOutput;
             }
         }
-        
+
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
         return handlerInput.responseBuilder
@@ -339,7 +337,7 @@ const YesNoIntentHandler = {
     canHandle(handlerInput) {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent" 
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent"
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.NoIntent")
             && (sessionAttributes.state == config.states.TRAINING
                 || sessionAttributes.state == config.states.FINISHED);
@@ -354,7 +352,7 @@ const YesNoIntentHandler = {
             // Stop the skill
             return CancelAndStopIntentHandler.handle(handlerInput);
         }
-        
+
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -367,7 +365,7 @@ const TrueFalseIntentHandler = {
     canHandle(handlerInput) {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === "TrueFalseAnswerIntent" 
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "TrueFalseAnswerIntent"
             && sessionAttributes.state == config.states.TRAINING;
     },
     async handle(handlerInput) {
@@ -387,7 +385,7 @@ const TrueFalseIntentHandler = {
             // Stop the skill
             return CancelAndStopIntentHandler.handle(handlerInput);
         }
-        
+
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -401,8 +399,8 @@ async function HandleYesNoTrueFalse(isYes, handlerInput) {
     const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
     const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
-    let {speakOutput, repromptOutput}  = await trainingHandler.handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
-    
+    let { speakOutput, repromptOutput } = await trainingHandler.handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
+
     repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
     return { speakOutput, repromptOutput };
@@ -424,8 +422,8 @@ const NumericAnswerIntentHandler = {
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
         const numericAnswer = Alexa.getSlotValue(handlerInput.requestEnvelope, "numericAnswer");
 
-        let {speakOutput, repromptOutput} = await trainingHandler.handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
-        
+        let { speakOutput, repromptOutput } = await trainingHandler.handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
+
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
@@ -435,7 +433,7 @@ const NumericAnswerIntentHandler = {
             return CancelAndStopIntentHandler.handle(handlerInput);
         }
 
-        
+
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -472,7 +470,7 @@ const getCanonicalSlot = (slot) => {
         }
     }
 };
-  
+
 // -------------------------------------------------------------------
 // Generic input handlers
 const DeleteDataIntentHandler = {
@@ -485,7 +483,7 @@ const DeleteDataIntentHandler = {
     },
     async handle(handlerInput) {
         await handlerInput.attributesManager.deletePersistentAttributes();
-        
+
         const speakOutput = handlerInput.t("DELETE_DATA_CONFIRMED");
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -546,28 +544,8 @@ const FallbackIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.FallbackIntent";
     },
     async handle(handlerInput) {
-        let speakOutput = null;
-        let repromptOutput = null;
-        
-        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-
-        console.log(`In fallback handler for ${intentName}. State: ${sessionAttributes.state}.`);
-        //const speakOutput = `Fallback handler for ${intentName}`;
-        if (sessionAttributes.state === config.states.TRAINING) {
-            speakOutput = handlerInput.t("FALLBACK_WHILE_TRAINING");
-        } else if (sessionAttributes.state == config.states.STUDENT_NAME) {
-            speakOutput = handlerInput.t("FALLBACK_WHILE_NAME");
-        } else {
-            speakOutput = handlerInput.t("FALLBACK_GENERIC");
-        }
-        if (sessionAttributes.repromptOutput !== null) {
-            repromptOutput = sessionAttributes.repromptOutput;
-            speakOutput += " " + repromptOutput;
-        } else {
-            repromptOutput = speakOutput;
-        }
+        let { speakOutput, repromptOutput } = await trainingHandler.handleFallbackIntent(true, handlerInput, intentName);
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -576,21 +554,21 @@ const FallbackIntentHandler = {
     },
 };
 
-// The intent reflector is used for interaction model testing and debugging.
-// It will simply repeat the intent the user said. You can create custom handlers
-// for your intents by defining them above, then also adding them to the request
-// handler chain below.
+// Got an intent that shouldn't have been triggered because
+// the skill is in a different state.
+// But Alexa is quite sure about that triggered intent.
+// Log the issue and reprompt the user, hoping to get the expected answer next time.
 const IntentReflectorHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest";
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-        const speakOutput = `You just triggered ${intentName}`;
+        let { speakOutput, repromptOutput } = await trainingHandler.handleFallbackIntent(false, handlerInput, intentName);
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .reprompt(repromptOutput)
             .getResponse();
     }
 };
@@ -629,9 +607,9 @@ const LocalizationInterceptor = {
                 resources: languageStrings,
                 returnObjects: true
             });
- 
+
         handlerInput.t = (key, opts) => {
-            const value = i18next.t(key, {...{interpolation: {escapeValue: false}}, ...opts});
+            const value = i18next.t(key, { ...{ interpolation: { escapeValue: false } }, ...opts });
             if (Array.isArray(value)) {
                 return value[Math.floor(Math.random() * value.length)]; // return a random element from the array
             } else {
