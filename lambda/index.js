@@ -3,14 +3,19 @@
 // Warning: only deploy with Powershell 7, issues with "normal" PowerShell: https://github.com/alexa/ask-cli/issues/59
 
 const Alexa = require("ask-sdk-core");
-//const AWS = require("aws-sdk");
-//const util  = require("./util");
 const i18next = require("i18next");
-//const sprintf = require("i18next-sprintf-postprocessor"); 
 const sprintf = require("sprintf-js").sprintf;
 const { DynamoDbPersistenceAdapter } = require("ask-sdk-dynamodb-persistence-adapter");
-// eslint-disable-next-line no-undef
-const persistenceAdapter = new DynamoDbPersistenceAdapter({ tableName: process.env.DYNAMODB_TABLE_NAME });
+// Make sure the Dynamo DB persistence is always in the same region by providing an own instance
+const AWS = require("aws-sdk");
+AWS.config.update({ region: "eu-west-1" });
+const dynamoDBInstance = new AWS.DynamoDB({ apiVersion: "latest" });
+const persistenceAdapter = new DynamoDbPersistenceAdapter({
+    // Disable process not defined warning
+    // eslint-disable-next-line no-undef
+    tableName: process.env.DYNAMODB_TABLE_NAME,
+    dynamoDBClient: dynamoDBInstance
+});
 const config = require("./config.js");
 const trainingHandler = require("./trainingHandler.js");
 const dbHandler = require("./dbHandler.js");
@@ -45,23 +50,46 @@ const LaunchRequestHandler = {
         // Reset saved reprompt output
         sessionAttributes.repromptOutput = null;
 
-        if (persistentAttributes.studentName) {
-            // TODO: Check if there is a course to resume!
-            const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
-            speakOutput = handlerInput.t("WELCOME_PERSONALIZED", {
-                studentName: persistentAttributes.studentName,
+        if (persistentAttributes.currentTrainingName) {
+            // User has already started a training - ask to resume
+            const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT_NONAME", {
+                currentTrainingName: persistentAttributes.currentTrainingName
+            });
+            speakOutput = handlerInput.t("WELCOME_PERSONALIZED_NONAME", {
                 prompt: speakQuestion
             });
             repromptOutput = speakQuestion;
             sessionAttributes.state = config.states.CHOOSE_COURSE;
-            //startAlexaConversationsDialog = "StartTraining";
         } else {
-            speakOutput = handlerInput.t("WELCOME");
-            repromptOutput = handlerInput.t("WELCOME_REPROMPT");
+            // User has not started a course yet - treat as a new user!
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+            speakOutput = handlerInput.t("WELCOME_NONAME", {
+                availableTrainings: availableTrainings
+            });
+            repromptOutput = handlerInput.t("WELCOME_REPROMPT_NONAME", {
+                availableTrainings: availableTrainings
+            });
             // Initialize new user
             trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
-            //startAlexaConversationsDialog = "SetFirstName";
         }
+
+        // if (persistentAttributes.studentName) {
+        //     // TODO: Check if there is a course to resume!
+        //     const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
+        //     speakOutput = handlerInput.t("WELCOME_PERSONALIZED", {
+        //         studentName: persistentAttributes.studentName,
+        //         prompt: speakQuestion
+        //     });
+        //     repromptOutput = speakQuestion;
+        //     sessionAttributes.state = config.states.CHOOSE_COURSE;
+        //     //startAlexaConversationsDialog = "StartTraining";
+        // } else {
+        //     speakOutput = handlerInput.t("WELCOME");
+        //     repromptOutput = handlerInput.t("WELCOME_REPROMPT");
+        //     // Initialize new user
+        //     trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
+        //     //startAlexaConversationsDialog = "SetFirstName";
+        // }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
@@ -155,7 +183,7 @@ const StudentNameIntentHandler = {
             sessionAttributes.state = config.states.CHOOSE_COURSE;
             persistentAttributes.studentName = studentName;
 
-            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
             speakOutput = handlerInput.t("AVAILABLE_COURSES", {
                 studentName: studentName,
                 availableTrainings: availableTrainings
@@ -200,7 +228,7 @@ const ChooseCourseIntentHandler = {
 
         if (userTrainingName === undefined || userTrainingName === null) {
             speakOutput = handlerInput.t("ERROR_COURSE_NOT_UNDERSTOOD");
-            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
             repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
                 availableTrainings: availableTrainings
             });
@@ -221,7 +249,7 @@ const ChooseCourseIntentHandler = {
                 speakOutput = handlerInput.t("ERROR_COURSE_NOT_FOUND", {
                     userTrainingName: userTrainingName
                 });
-                const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
+                const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
                 repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
                     availableTrainings: availableTrainings
                 });
@@ -255,7 +283,7 @@ const ListCoursesIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage());
+        const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
         speakOutput = handlerInput.t("AVAILABLE_COURSES_LIST", {
             availableTrainings: availableTrainings
         });

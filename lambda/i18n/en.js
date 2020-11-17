@@ -1,13 +1,21 @@
 module.exports = {
     translation: {
+        WELCOME_NONAME: "Hi and welcome to voice learning! I can help you understand the most important concepts of your courses. I have content for these courses: {{availableTrainings}}. Which course should I start?",
+        WELCOME_REPROMPT_NONAME: "Please choose one of these courses: {{availableTrainings}}.",
+        WELCOME_PERSONALIZED_NONAME: "Welcome back! {{prompt}}",
+        WELCOME_PERSONALIZED_REPROMPT_NONAME: "Would you like to resume your last course {{currentTrainingName}} or start another course?",
+
         WELCOME: "Hi and welcome to voice learning! I can help you understand the most important concepts of your courses. First, please tell me your first name!",
         WELCOME_REPROMPT: "Please tell me your first name.",
         WELCOME_PERSONALIZED: "Welcome back {{studentName}}! {{prompt}}",
         //WELCOME_PERSONALIZED: "Welcome back <alexa:name type='first' personId='{{personId}}' />! <break /> {{prompt}}",
         WELCOME_PERSONALIZED_REPROMPT: "Would you like to resume your last course or start another course?",
+
         AVAILABLE_COURSES: "Hi {{studentName}}. I'm happy to help you with learning for your courses. I have content for these courses: {{availableTrainings}}. Which course should I start?",
         AVAILABLE_COURSES_REPROMPT: "Please choose one of these courses: {{availableTrainings}}.",
         AVAILABLE_COURSES_LIST: "You can choose one of these available courses: {{availableTrainings}}.",
+        AVAILABLE_COURSES_OR: " or ",
+
         SELECTED_COURSE_START_TRAINING: "You chose the course: {{currentTrainingName}}. Let's get started!",
         RESUMING_COURSE_START_TRAINING: "Resuming course {{currentTrainingName}}.",
         RESTART_COURSE_START_TRAINING: "Restarting course {{currentTrainingName}}.",
@@ -36,7 +44,7 @@ module.exports = {
         ERROR_RESUME_COURSE_WRONG_STATE: "I understood that you'd like to resume the previous course. This is not possible right now.",
         ERROR_STUDENT_NAME_WHEN_NOT_EXPECTED: "I understood a name, but did not expect that. Please repeat what you wanted to say in case I misunderstood you.",
         ERROR_TRAINING_INVALID_ANSWER: "Your answer {{answerAsText}} is not valid for this question.",
-        FALLBACK: "Sorry, I didn't catch that. Say that again please.", 
+        FALLBACK: "Sorry, I didn't catch that. Say that again please.",
         FALLBACK_REPROMPT: "Say that again please.",
         ERROR: "Sorry, something went wrong. Please try again.",
         EXIT: "Goodbye!",

@@ -2,7 +2,7 @@
 const AWS = require("aws-sdk");
 
 // Configure AWS DynamoDB
-AWS.config.update({region: "eu-west-1"});
+AWS.config.update({ region: "eu-west-1" });
 const DB_TABLE_TRAININGS = "LearningAssistantTrainings";
 const DB_TABLE_QUESTIONS = "LearningAssistantQuestions";
 const DB_TABLE_ANSWERS = "LearningAssistantAnswers";
@@ -12,7 +12,7 @@ let ddbInstance = null;
 
 function connectToDb() {
     if (ddbInstance === null) {
-        ddbInstance = new AWS.DynamoDB.DocumentClient({apiVersion: "2012-08-10"});
+        ddbInstance = new AWS.DynamoDB.DocumentClient({ apiVersion: "2012-08-10" });
     }
     return ddbInstance;
 }
@@ -29,7 +29,7 @@ module.exports.getTrainingList = async function getTrainingList(language) {
         let trainingItems = data.Items;
         //console.log("db getTrainingList: " + JSON.stringify(trainingItems));
         //console.log("Removing all items not available in language: " + language);
-        
+
         for (let [key, value] of Object.entries(trainingItems)) {
             // DynamoDB returns an interesting object for the StringSet used for storing the languages, 
             // containing "type", "values" and "wrapperName"
@@ -46,7 +46,7 @@ module.exports.getTrainingList = async function getTrainingList(language) {
     }
 };
 
-module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech(language) {
+module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech(language, lastSeparator) {
     let trainings = await module.exports.getTrainingList(language);
     //console.log("got trainings: " + JSON.stringify(trainings));
     // Well, I'm sure there is some more elegant alternative for this in JS.
@@ -54,7 +54,9 @@ module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpe
     trainings.forEach((item) => {
         trainingNames.push(item.TrainingName);
     });
-    return trainingNames.join(", ");
+    //return trainingNames.join(", ");
+    // AVAILABLE_COURSES_OR
+    return trainingNames.slice(0, -1).join(", ") + lastSeparator + trainingNames.slice(-1);
 };
 
 module.exports.getQuestionIdListForTraining = async function getQuestionIdListForTraining(trainingId) {
@@ -85,9 +87,9 @@ module.exports.getQuestion = async function getQuestion(trainingId, questionId, 
     const params = {
         TableName: DB_TABLE_QUESTIONS,
         Key: {
-            "TrainingId": trainingId, 
+            "TrainingId": trainingId,
             "QuestionId": questionId
-        }, 
+        },
     };
     try {
         const db = connectToDb();
@@ -123,8 +125,8 @@ module.exports.logAnswerForUser = async function logAnswerForUser(userId, traini
         },
         //UpdateExpression: "SET my_value = if_not_exists(#counter, :start) + :inc",
         UpdateExpression: "ADD #counter :increment",
-        ExpressionAttributeNames: {"#counter": propertyToUpdateName},
-        ExpressionAttributeValues: {":increment": 1},
+        ExpressionAttributeNames: { "#counter": propertyToUpdateName },
+        ExpressionAttributeValues: { ":increment": 1 },
         ReturnValues: "UPDATED_NEW"
     };
     try {
