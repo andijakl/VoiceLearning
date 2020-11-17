@@ -50,46 +50,52 @@ const LaunchRequestHandler = {
         // Reset saved reprompt output
         sessionAttributes.repromptOutput = null;
 
-        if (persistentAttributes.currentTrainingName) {
-            // User has already started a training - ask to resume
-            const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT_NONAME", {
-                currentTrainingName: persistentAttributes.currentTrainingName
-            });
-            speakOutput = handlerInput.t("WELCOME_PERSONALIZED_NONAME", {
-                prompt: speakQuestion
-            });
-            repromptOutput = speakQuestion;
-            sessionAttributes.state = config.states.CHOOSE_COURSE;
+        if (!config.useStudentName) {
+            // Do not ask for student name
+            if (persistentAttributes.currentTrainingName) {
+                // User has already started a training - ask to resume
+                const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT_NONAME", {
+                    currentTrainingName: persistentAttributes.currentTrainingName
+                });
+                speakOutput = handlerInput.t("WELCOME_PERSONALIZED_NONAME", {
+                    prompt: speakQuestion
+                });
+                repromptOutput = speakQuestion;
+                sessionAttributes.state = config.states.CHOOSE_COURSE;
+            } else {
+                // User has not started a course yet - treat as a new user!
+                const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+                speakOutput = handlerInput.t("WELCOME_NONAME", {
+                    availableTrainings: availableTrainings
+                });
+                repromptOutput = handlerInput.t("WELCOME_REPROMPT_NONAME", {
+                    availableTrainings: availableTrainings
+                });
+                // Initialize new user
+                trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
+                sessionAttributes.state = config.states.CHOOSE_COURSE;
+            }
         } else {
-            // User has not started a course yet - treat as a new user!
-            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
-            speakOutput = handlerInput.t("WELCOME_NONAME", {
-                availableTrainings: availableTrainings
-            });
-            repromptOutput = handlerInput.t("WELCOME_REPROMPT_NONAME", {
-                availableTrainings: availableTrainings
-            });
-            // Initialize new user
-            trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
+            // Use student name
+            if (persistentAttributes.studentName) {
+                // TODO: Check if there is a course to resume!
+                const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
+                speakOutput = handlerInput.t("WELCOME_PERSONALIZED", {
+                    studentName: persistentAttributes.studentName,
+                    prompt: speakQuestion
+                });
+                repromptOutput = speakQuestion;
+                sessionAttributes.state = config.states.CHOOSE_COURSE;
+                //startAlexaConversationsDialog = "StartTraining";
+            } else {
+                speakOutput = handlerInput.t("WELCOME");
+                repromptOutput = handlerInput.t("WELCOME_REPROMPT");
+                // Initialize new user
+                trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
+                sessionAttributes.state = config.states.STUDENT_NAME;
+                //startAlexaConversationsDialog = "SetFirstName";
+            }
         }
-
-        // if (persistentAttributes.studentName) {
-        //     // TODO: Check if there is a course to resume!
-        //     const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
-        //     speakOutput = handlerInput.t("WELCOME_PERSONALIZED", {
-        //         studentName: persistentAttributes.studentName,
-        //         prompt: speakQuestion
-        //     });
-        //     repromptOutput = speakQuestion;
-        //     sessionAttributes.state = config.states.CHOOSE_COURSE;
-        //     //startAlexaConversationsDialog = "StartTraining";
-        // } else {
-        //     speakOutput = handlerInput.t("WELCOME");
-        //     repromptOutput = handlerInput.t("WELCOME_REPROMPT");
-        //     // Initialize new user
-        //     trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
-        //     //startAlexaConversationsDialog = "SetFirstName";
-        // }
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 

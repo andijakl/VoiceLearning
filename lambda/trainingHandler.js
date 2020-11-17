@@ -14,7 +14,6 @@ module.exports.initializeUser = function (sessionAttributes, persistentAttribute
     persistentAttributes.totalCorrectAnswers = 0;
     persistentAttributes.totalWrongAnswers = 0;
     persistentAttributes.answersForTrainings = {};
-    sessionAttributes.state = config.states.CHOOSE_COURSE;
 };
 
 module.exports.selectTraining = async function selectTraining(userTrainingName, persistentAttributes, language) {
