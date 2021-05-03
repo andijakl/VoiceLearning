@@ -16,8 +16,8 @@
     "ask-sdk-core": "^2.10.2",
     "ask-sdk-dynamodb-persistence-adapter": "^2.10.2",
     "ask-sdk-model": "^1.35.1",
-    "aws-sdk": "^2.889.0",
-    "i18next": "^19.9.2",
+    "aws-sdk": "^2.897.0",
+    "i18next": "^20.2.2",
     "sprintf-js": "^1.1.2"
   },
   "devDependencies": {
