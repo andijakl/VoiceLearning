@@ -20,6 +20,10 @@ module.exports = {
         RESUMING_COURSE_START_TRAINING: "Setze den Kurs {{currentTrainingName}} fort.",
         RESTART_COURSE_START_TRAINING: "Wiederhole den Kurs {{currentTrainingName}}.",
         HELP_PROMPT: "Ich bin dein Voice Learning Assistent und stelle dir Fragen zu deinen Kursen, die dir helfen, dir die Inhalte zu merken. Das funktioniert wie ein Quiz!",
+        HELP_STATE_CHOOSE_COURSE: "Jetzt musst du dich für einen Kurs entscheiden. Du kannst mich erneut nach verfügbaren Kursen fragen, wenn du diese noch einmal hören willst. Sage dann einfach den Namen des Kurses, den du beginnen möchtest.",
+        HELP_STATE_TRAINING: "Jetzt musst du eine Frage beantworten. Bei Fragen, bei denen du zwischen mehreren Optionen wählen kannst, antworte bitte mit der Nummer der richtigen Antwort. Bei Fragen nach wahr oder falsch, antworte bitte entsprechend direkt mit wahr oder falsch.",
+        HELP_STATE_FINISHED: "Du hast gerade ein Training abgeschlossen. Ich kann dir gerne noch mehr Fragen stellen - sage ja, um weiter zu machen. Wenn du später weiter machen willst, antworte mit nein.",
+
         GENERIC_REPROMPT: "Wie kann ich dir helfen?",
         YES: "Richtig",
         NO: "Falsch",

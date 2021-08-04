@@ -20,22 +20,6 @@
           "samples": []
         },
         {
-          "name": "StudentNameIntent",
-          "slots": [
-            {
-              "name": "StudentName",
-              "type": "AMAZON.FirstName"
-            }
-          ],
-          "samples": [
-            "Mein Vorname ist {StudentName}",
-            "Ich bin {StudentName}",
-            "Nenne mich {StudentName}",
-            "Ich heiße {StudentName}",
-            "Mein Name ist {StudentName}"
-          ]
-        },
-        {
           "name": "ChooseCourseIntent",
           "slots": [
             {
@@ -214,5 +198,5 @@
       }
     }
   },
-  "version": "46"
+  "version": "47"
 }

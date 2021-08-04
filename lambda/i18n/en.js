@@ -20,6 +20,10 @@ module.exports = {
         RESUMING_COURSE_START_TRAINING: "Resuming course {{currentTrainingName}}.",
         RESTART_COURSE_START_TRAINING: "Restarting course {{currentTrainingName}}.",
         HELP_PROMPT: "I'm the teaching assistant and can ask you questions to help you learn for your courses. It works like a quiz!",
+        HELP_STATE_CHOOSE_COURSE: "Right now, you need to choose a course. You can ask me again for available courses to hear them again. Then, just say the name of the course you'd like to start.",
+        HELP_STATE_TRAINING: "Right now, you need to answer the question. For questions that let you choose between multiple options, please answer with the number of the correct option. For true or false questions, please simply answer with true or false.",
+        HELP_STATE_FINISHED: "You just finished a training. I'd be happy to ask you more questions - say yes to continue training. Say no if you'd like to train again later.",
+
         GENERIC_REPROMPT: "How can I help you?",
         YES: "true",
         NO: "false",

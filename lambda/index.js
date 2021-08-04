@@ -157,7 +157,7 @@ const LaunchRequestHandler = {
 // Config Intent Handlers
 
 
-
+/*
 const StudentNameIntentHandler = {
     canHandle(handlerInput) {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
@@ -207,7 +207,7 @@ const StudentNameIntentHandler = {
             .getResponse();
     }
 };
-
+*/
 
 const ChooseCourseIntentHandler = {
     canHandle(handlerInput) {
@@ -297,7 +297,13 @@ const ListCoursesIntentHandler = {
         // Keep reprompt output from previous question
         repromptOutput = sessionAttributes.repromptOutput;
 
-        speakOutput += " " + repromptOutput;
+        if (sessionAttributes.state !== config.states.CHOOSE_COURSE) {
+            // Only add the reprompt output if we're not in the choose course state.
+            // If we're in that state, the skill is waiting for a cource choice already,
+            // which would result in listing the courses twice if the user is asking
+            // for available courses at that point.
+            speakOutput += " " + repromptOutput;
+        }
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -332,6 +338,7 @@ const ResumeCourseIntentHandler = {
                 ({ speakOutput, repromptOutput } = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
                 speakOutput = introOutput + " " + speakOutput;
             } else {
+                // No course startet yet - can not resume
                 speakOutput = handlerInput.t("ERROR_RESUME_NO_COURSE_STARTED");
                 if (sessionAttributes.repromptOutput !== null) {
                     speakOutput += " " + sessionAttributes.repromptOutput;
@@ -347,6 +354,8 @@ const ResumeCourseIntentHandler = {
             ({ speakOutput, repromptOutput } = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
             speakOutput = introOutput + " " + speakOutput;
         } else {
+            // Should only get here when in the state of choosing a course 
+            // (usually at the beginning or after a training is finished)
             speakOutput = handlerInput.t("ERROR_RESUME_COURSE_WRONG_STATE");
             if (sessionAttributes.repromptOutput !== null) {
                 speakOutput += " " + sessionAttributes.repromptOutput;
@@ -379,12 +388,14 @@ const YesNoIntentHandler = {
     async handle(handlerInput) {
         const isYes = Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent";
 
+        // Yes / true & no / false handling is centralized as these
+        // answers have similar meaning in the quiz context.
         let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
 
         // User doesn't want to continue with the skill - stop
         if (repromptOutput === -1) {
             // Stop the skill
-            return CancelAndStopIntentHandler.handle(handlerInput);
+            repromptOutput = null;
         }
 
         return handlerInput.responseBuilder
@@ -412,12 +423,14 @@ const TrueFalseIntentHandler = {
 
         const isYes = trueFalseAnswer.localeCompare("true", undefined, { sensitivity: "accent" }) === 0;
 
+        // Yes / true & no / false handling is centralized as these
+        // answers have similar meaning in the quiz context.
         let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
 
         // User doesn't want to continue with the skill - stop
         if (repromptOutput === -1) {
             // Stop the skill
-            return CancelAndStopIntentHandler.handle(handlerInput);
+            repromptOutput = null;
         }
 
         return handlerInput.responseBuilder
@@ -456,6 +469,7 @@ const NumericAnswerIntentHandler = {
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
         const numericAnswer = Alexa.getSlotValue(handlerInput.requestEnvelope, "numericAnswer");
 
+        // Handle numeric answer, which corresponds to the answer number
         let { speakOutput, repromptOutput } = await trainingHandler.handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
 
 
@@ -464,7 +478,7 @@ const NumericAnswerIntentHandler = {
         // User doesn't want to continue with the skill - stop
         if (repromptOutput === -1) {
             // Stop the skill
-            return CancelAndStopIntentHandler.handle(handlerInput);
+            repromptOutput = null;
         }
 
 
@@ -533,9 +547,19 @@ const HelpIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent";
     },
     async handle(handlerInput) {
+        // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-        const speakOutput = handlerInput.t("HELP_PROMPT");
+        let speakOutput = handlerInput.t("HELP_PROMPT");
+
+        if (sessionAttributes.state === config.states.CHOOSE_COURSE) {
+            speakOutput += " " + handlerInput.t("HELP_STATE_CHOOSE_COURSE");
+        } else if (sessionAttributes.state === config.states.TRAINING) {
+            speakOutput += " " + handlerInput.t("HELP_STATE_TRAINING");
+        } else if (sessionAttributes.state === config.states.FINISHED) {
+            speakOutput += " " + handlerInput.t("HELP_STATE_FINISHED");
+        }
+
         let repromptOutput = handlerInput.t("GENERIC_REPROMPT");
         if (sessionAttributes.repromptOutput !== null) {
             repromptOutput = sessionAttributes.repromptOutput;
@@ -661,12 +685,8 @@ exports.handler = Alexa.SkillBuilders.custom()
     .addRequestHandlers(
         // Launch
         LaunchRequestHandler,
-        // Alexa Converstaions
-        //ListTrainingsApiHandler,
-        //StartTrainingApiHandler,
-        //SetFirstNameApiHandler,
         // Config
-        StudentNameIntentHandler,
+        //StudentNameIntentHandler,
         // Training
         NumericAnswerIntentHandler,
         YesNoIntentHandler,

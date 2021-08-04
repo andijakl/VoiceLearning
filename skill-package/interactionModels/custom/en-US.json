@@ -20,22 +20,6 @@
           "samples": []
         },
         {
-          "name": "StudentNameIntent",
-          "slots": [
-            {
-              "name": "StudentName",
-              "type": "AMAZON.FirstName"
-            }
-          ],
-          "samples": [
-            "My first name is {StudentName}",
-            "I'm {StudentName}",
-            "Call me {StudentName}",
-            "I am {StudentName}",
-            "My name is {StudentName}"
-          ]
-        },
-        {
           "name": "ChooseCourseIntent",
           "slots": [
             {
@@ -185,6 +169,7 @@
               "name": {
                 "value": "false",
                 "synonyms": [
+                  "not true",
                   "invalid",
                   "not correct",
                   "incorrect",
@@ -211,5 +196,5 @@
       }
     }
   },
-  "version": "62"
+  "version": "66"
 }
