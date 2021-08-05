@@ -27,7 +27,8 @@
                     "type": "SendEvent",
                         "arguments": [
                             "ListItemSelected",
-                            "${ordinal}"
+                            "${ordinal}",
+                            "${data.item}"
                         ]
                 }
             }

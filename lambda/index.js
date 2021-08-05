@@ -29,11 +29,7 @@ const languageStrings = {
 };
 
 // APL
-//const aplWelcomeDocument = require("./apl_welcome.json");
 //const aplTrainingQuestionDocument = require("./response/display/training_question/document.json");
-
-// Tokens used when sending the APL directives
-//const APL_TOKEN_WELCOME = "welcomeToken";
 
 // -------------------------------------------------------------------
 // Launch intent handler
@@ -119,54 +115,12 @@ const LaunchRequestHandler = {
         // };
         // util.addAplIfSupported(handlerInput, config.aplTokens.QUESTION, aplTrainingQuestionDocument, dataSources);
 
-        // TODO: Alexa Conversations crashes without meaningful error message when doing this.
-        // Therefore, not using Alexa Conversations for now.
-        // if (startAlexaConversationsDialog) {
-        //     // TODO: Hand over to Alexa Conversations
-        //     if (i18next.language === "en-US") {
-        //         console.log("Handing over to Alexa Conversations. Starting dialog: " + startAlexaConversationsDialog);
-        //         return handlerInput.responseBuilder
-        //             .addDirective({
-        //                 type: "Dialog.DelegateRequest",
-        //                 target: "AMAZON.Conversations",
-        //                 period: {
-        //                     until: "EXPLICIT_RETURN" 
-        //                 },
-        //                 updatedRequest: {
-        //                     type: "Dialog.InputRequest",
-        //                     input: {
-        //                         name: startAlexaConversationsDialog
-        //                     }
-        //                 }
-        //             })
-        //             .getResponse();
-        //     } 
-        // }
-
         return responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
             .getResponse();
     }
 };
-
-// -------------------------------------------------------------------
-// APL Intent handlers
-const AplTrainingQuestionEventHandler = {
-    canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === "Alexa.Presentation.APL.UserEvent"
-            && handlerInput.requestEnvelope.request.arguments[0] === "ListItemSelected";
-    },
-    handle(handlerInput) {
-        //const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.source.id + "!";
-        const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.arguments[1] + "!";
-        return handlerInput.responseBuilder
-            .speak(speakOutput)
-            .getResponse();
-    }
-};
-
-
 // -------------------------------------------------------------------
 // Config Intent Handlers
 
@@ -386,6 +340,47 @@ const ResumeCourseIntentHandler = {
     }
 };
 
+
+// -------------------------------------------------------------------
+// APL Intent handlers
+const AplTrainingQuestionEventHandler = {
+    canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "Alexa.Presentation.APL.UserEvent"
+            && handlerInput.requestEnvelope.request.arguments[0] === "ListItemSelected"
+            && (sessionAttributes.state == config.states.TRAINING);
+    },
+    async handle(handlerInput) {
+        //const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.source.id + "!";
+        //const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.arguments[1] + "!";
+
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        const clickedListItemNum = handlerInput.requestEnvelope.request.arguments[1];
+        let speakOutput = null;
+        let repromptOutput = null;
+
+        if (sessionAttributes.questionType === config.questionType.YES_NO) {
+            // Yes / true & no / false handling is centralized as these
+            // answers have similar meaning in the quiz context.
+            const isYes = clickedListItemNum === 1;
+            ({ speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput));
+        } else {
+            // Handle multiple choice / numeric answers
+            speakOutput = "Sorry, not supported yet - coming soon!";
+        }
+
+        // User doesn't want to continue with the skill - stop
+        if (repromptOutput === -1) {
+            // Stop the skill
+            repromptOutput = null;
+        }
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(repromptOutput)
+            .getResponse();
+    }
+};
 
 // -------------------------------------------------------------------
 // Training intent handlers

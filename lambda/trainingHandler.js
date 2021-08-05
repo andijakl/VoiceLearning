@@ -193,7 +193,11 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
     } else {
         ({ speakOutput, repromptOutput } = await getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language));
         // Add to UI (APL)
-        uiHandler.showQuestionUi(handlerInput, sessionAttributes.questionText, sessionAttributes.possibleAnswersString);
+        if (sessionAttributes.state === config.states.TRAINING) {
+            // Still in training mode? Update UI with new question
+            console.log("Calling show question UI: " + sessionAttributes.possibleAnswersString);
+            uiHandler.showQuestionUi(handlerInput, sessionAttributes.questionText, sessionAttributes.possibleAnswersString);
+        }
     }
 
     return { speakOutput, repromptOutput };
@@ -237,10 +241,13 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
         if (questionData.QuestionType === config.questionType.YES_NO) {
             // add possible answers like: "yes or no?"
             sessionAttributes.questionTextWithAnswers = questionData.QuestionText + " " + handlerInput.t("TRAINING_YES_NO_OPTIONS");
+            // No possible answers provided by DB - add them here
+            questionData.PossibleAnswers = handlerInput.t("YES") + "|" + handlerInput.t("NO");
         } else if (questionData.QuestionType === config.questionType.NUMERIC) {
             // Parse possible answers
             sessionAttributes.questionTextWithAnswers = questionData.QuestionText + convertPossibleAnswersForSpeech(questionData.PossibleAnswers);
         } else {
+            // Fallback - currently no other question type that might need specific handling defined
             sessionAttributes.questionTextWithAnswers = questionData.QuestionText;
         }
 
