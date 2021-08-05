@@ -29,6 +29,7 @@ module.exports = {
         SELECTED_COURSE_START_TRAINING: "Du hast den Kurs {{currentTrainingName}} gewählt. Legen wir los!",
         RESUMING_COURSE_START_TRAINING: "Setze den Kurs {{currentTrainingName}} fort.",
         RESTART_COURSE_START_TRAINING: "Wiederhole den Kurs {{currentTrainingName}}.",
+
         HELP_PROMPT: "Ich bin dein Voice Learning Assistent und stelle dir Fragen zu deinen Kursen, die dir helfen, dir die Inhalte zu merken. Das funktioniert wie ein Quiz!",
         HELP_STATE_CHOOSE_COURSE: "Jetzt musst du dich für einen Kurs entscheiden. Du kannst mich erneut nach verfügbaren Kursen fragen, wenn du diese noch einmal hören willst. Sage dann einfach den Namen des Kurses, den du beginnen möchtest.",
         HELP_STATE_TRAINING: "Jetzt musst du eine Frage beantworten. Bei Fragen, bei denen du zwischen mehreren Optionen wählen kannst, antworte bitte mit der Nummer der richtigen Antwort. Bei Fragen nach wahr oder falsch, antworte bitte entsprechend direkt mit wahr oder falsch.",
@@ -62,5 +63,10 @@ module.exports = {
         FALLBACK_REPROMPT: "Say that again please.",
         ERROR: "Leider hat etwas nicht geklappt. Bitte versuche es noch einmal.",
         EXIT: "Bis zum nächsten Mal!",
+
+        UI_TRAINING_FINISHED_HEADLINE: "Fertig!",
+        UI_TRAINING_FINISHED_TEXT: "Du hast {{score}} von {{questionNumber}} Punkten erreicht<br>Du hast bereits {{finishedTrainings}} Trainings abgeschlossen.",
+        UI_TRAINING_FINISHED_BUTTON_AGAIN: "Noch einmal",
+        UI_TRAINING_FINISHED_BUTTON_END: "Beenden"
     }
 };

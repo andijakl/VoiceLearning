@@ -396,6 +396,25 @@ const AplChooseCourseEventHandler = {
     }
 };
 
+const AplTrainAgainEventHandler = {
+    canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "Alexa.Presentation.APL.UserEvent"
+            && handlerInput.requestEnvelope.request.arguments[0] === "trainAgain"
+            && (sessionAttributes.state == config.states.FINISHED);
+    },
+    async handle(handlerInput) {
+        const isYes = handlerInput.requestEnvelope.request.arguments[1] === 1;
+
+        let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(repromptOutput)
+            .getResponse();
+    }
+};
+
 // -------------------------------------------------------------------
 // Training intent handlers
 
@@ -723,6 +742,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         // APL
         AplTrainingQuestionEventHandler,
         AplChooseCourseEventHandler,
+        AplTrainAgainEventHandler,
         // Generic Alexa
         HelpIntentHandler,
         CancelAndStopIntentHandler,

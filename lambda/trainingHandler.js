@@ -182,14 +182,14 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
 
     if (sessionAttributes.questionNumber >= config.numQuestionsPerTraining) {
         // Training finished
-        await trainingFinished(sessionAttributes, persistentAttributes);
-        speakOutput = handlerInput.t("TRAINING_FINISHED", {
-            score: sessionAttributes.score,
-            questionNumber: sessionAttributes.questionNumber,
-            finishedTrainings: persistentAttributes.finishedTrainings
-        });
-        repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
-        speakOutput += " " + repromptOutput;
+        ({ speakOutput, repromptOutput } = await trainingFinished(null, sessionAttributes, persistentAttributes, handlerInput));
+        // speakOutput = handlerInput.t("TRAINING_FINISHED", {
+        //     score: sessionAttributes.score,
+        //     questionNumber: sessionAttributes.questionNumber,
+        //     finishedTrainings: persistentAttributes.finishedTrainings
+        // });
+        // repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
+        // speakOutput += " " + repromptOutput;
     } else {
         ({ speakOutput, repromptOutput } = await getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language));
         // Add to UI (APL)
@@ -217,15 +217,16 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
     if (questionData === null) {
         // No question left to ask
         // Training finished
-        await trainingFinished(sessionAttributes, persistentAttributes);
-        speakOutput = handlerInput.t("TRAINING_FINISHED_NO_MORE_QUESTIONS");
-        speakOutput += " " + handlerInput.t("TRAINING_FINISHED", {
-            score: sessionAttributes.score,
-            questionNumber: sessionAttributes.questionNumber,
-            finishedTrainings: persistentAttributes.finishedTrainings
-        });
-        repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
-        speakOutput += " " + repromptOutput;
+        const preText = handlerInput.t("TRAINING_FINISHED_NO_MORE_QUESTIONS");
+        await trainingFinished(preText, sessionAttributes, persistentAttributes, handlerInput);
+        // speakOutput = handlerInput.t("TRAINING_FINISHED_NO_MORE_QUESTIONS");
+        // speakOutput += " " + handlerInput.t("TRAINING_FINISHED", {
+        //     score: sessionAttributes.score,
+        //     questionNumber: sessionAttributes.questionNumber,
+        //     finishedTrainings: persistentAttributes.finishedTrainings
+        // });
+        // repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
+        // speakOutput += " " + repromptOutput;
     } else {
         // Update session variables
         sessionAttributes.questionNumber += 1;
@@ -376,7 +377,23 @@ async function answerWrong(userId, sessionAttributes, persistentAttributes, hand
 // -------------------------------------------------------------------
 // Training state handler functions
 
-async function trainingFinished(sessionAttributes, persistentAttributes) {
+async function trainingFinished(preText, sessionAttributes, persistentAttributes, handlerInput) {
     sessionAttributes.state = config.states.FINISHED;
     persistentAttributes.finishedTrainings += 1;
+
+    const summaryText = handlerInput.t("TRAINING_FINISHED", {
+        score: sessionAttributes.score,
+        questionNumber: sessionAttributes.questionNumber,
+        finishedTrainings: persistentAttributes.finishedTrainings
+    });
+
+    let speakOutput = (preText ? preText + " " : "") + summaryText;
+
+    const repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
+    speakOutput += " " + repromptOutput;
+
+    uiHandler.showFinishedUi(sessionAttributes.score, sessionAttributes.questionNumber,
+        persistentAttributes.finishedTrainings, handlerInput);
+
+    return { speakOutput, repromptOutput };
 }

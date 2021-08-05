@@ -1,6 +1,7 @@
 {
   "type": "APL",
   "version": "1.7",
+  "theme": "dark",
   "import": [
     {
       "name": "alexa-layouts",

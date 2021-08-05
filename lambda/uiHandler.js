@@ -4,6 +4,7 @@ const util = require("./util");
 const aplWelcomeDocument = require("./response/display/welcome/document.json");
 const aplChooseCourseDocument = require("./response/display/choose_course/document.json");
 const aplTrainingQuestionDocument = require("./response/display/training_question/document.json");
+const aplFinishedDocument = require("./response/display/training_finished/document.json");
 
 module.exports.showQuestionUi = function showQuestionUi(questionText, possibleAnswersString, handlerInput) {
     const possibleAnswers = possibleAnswersString.split("|");
@@ -35,6 +36,24 @@ module.exports.showChooseCourseUi = function showChooseCourseUi(availableTrainin
         }
     };
     util.addAplIfSupported(handlerInput, config.aplTokens.CHOOSE_COURSE, aplChooseCourseDocument, dataSources);
+};
+
+module.exports.showFinishedUi = function showFinishedUi(score, questions, finishedTrainings, handlerInput) {
+    let trainingSummary = handlerInput.t("UI_TRAINING_FINISHED_TEXT", {
+        score: score,
+        questionNumber: questions,
+        finishedTrainings: finishedTrainings
+    });
+    const dataSources = {
+        data: {
+            headerTitle: handlerInput.t("TITLE"),
+            headline: handlerInput.t("UI_TRAINING_FINISHED_HEADLINE"),
+            trainingSummary: trainingSummary,
+            buttonAgain: handlerInput.t("UI_TRAINING_FINISHED_BUTTON_AGAIN"),
+            buttonEnd: handlerInput.t("UI_TRAINING_FINISHED_BUTTON_END")
+        }
+    };
+    util.addAplIfSupported(handlerInput, config.aplTokens.FINISHED, aplFinishedDocument, dataSources);
 };
 
 module.exports.showWelcomeUi = function showWelcomeUi(welcomeBack, availableTrainings, finishedTrainings, totalQuestionsAsked, handlerInput) {
