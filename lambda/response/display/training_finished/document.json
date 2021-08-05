@@ -21,6 +21,7 @@
         "headerTitle": "${payload.data.headerTitle}",
         "headerAttributionImage": "https://s3.amazonaws.com/CAPS-SSE/echo_developer/1458/035f8c508aa740349c8b9aa1e4c448bf/APP_ICON_LARGE?versionId=HC.4NKW_VxdCueSfOIm28pCWq_YDCUo0&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20210805T095615Z&X-Amz-SignedHeaders=host&X-Amz-Expires=86400&X-Amz-Credential=AKIAWBV6LQ4QMBDMF43H%2F20210805%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=3476d6def3d75c5af8ea26b857eb1acaac09c547bbbe32a724bae09bf8a37623",
         "backgroundColor": "#005097",
+        "backgroundOverlayGradient": true,
         "imageBlurredBackground": true,
         "imageAspectRatio": "square",
         "imageSource": "https://alexa-voice-learning-images.s3.eu-west-1.amazonaws.com/VoiceLearning-Finished.png",

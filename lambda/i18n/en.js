@@ -66,7 +66,7 @@ module.exports = {
 
         UI_TRAINING_FINISHED_HEADLINE: "Finished!",
         UI_TRAINING_FINISHED_TEXT: "You got a score of {{score}} out of {{questionNumber}}.<br>You already finished {{finishedTrainings}} trainings.",
-        UI_TRAINING_FINISHED_BUTTON_AGAIN: "Train again",
+        UI_TRAINING_FINISHED_BUTTON_AGAIN: "Again",
         UI_TRAINING_FINISHED_BUTTON_END: "End"
     }
 };

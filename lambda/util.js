@@ -76,3 +76,7 @@ module.exports.getAplADirective = function getAplADirective(token, document, dat
         "datasources": data
     };
 };
+
+module.exports.capitalizeFirstLetter = function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+};

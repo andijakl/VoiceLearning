@@ -1,5 +1,6 @@
 "use strict";
 const config = require("./config.js");
+const util = require("./util.js");
 const dbHandler = require("./dbHandler.js");
 const uiHandler = require("./uiHandler.js");
 
@@ -243,7 +244,7 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
             // add possible answers like: "yes or no?"
             sessionAttributes.questionTextWithAnswers = questionData.QuestionText + " " + handlerInput.t("TRAINING_YES_NO_OPTIONS");
             // No possible answers provided by DB - add them here
-            questionData.PossibleAnswers = handlerInput.t("YES") + "|" + handlerInput.t("NO");
+            questionData.PossibleAnswers = util.capitalizeFirstLetter(handlerInput.t("YES")) + "|" + util.capitalizeFirstLetter(handlerInput.t("NO"));
         } else if (questionData.QuestionType === config.questionType.NUMERIC) {
             // Parse possible answers
             sessionAttributes.questionTextWithAnswers = questionData.QuestionText + convertPossibleAnswersForSpeech(questionData.PossibleAnswers);
