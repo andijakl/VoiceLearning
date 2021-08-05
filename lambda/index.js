@@ -351,9 +351,6 @@ const AplTrainingQuestionEventHandler = {
             && (sessionAttributes.state == config.states.TRAINING);
     },
     async handle(handlerInput) {
-        //const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.source.id + "!";
-        //const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.arguments[1] + "!";
-
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const clickedListItemNum = handlerInput.requestEnvelope.request.arguments[1];
         let speakOutput = null;
@@ -366,13 +363,7 @@ const AplTrainingQuestionEventHandler = {
             ({ speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput));
         } else {
             // Handle multiple choice / numeric answers
-            speakOutput = "Sorry, not supported yet - coming soon!";
-        }
-
-        // User doesn't want to continue with the skill - stop
-        if (repromptOutput === -1) {
-            // Stop the skill
-            repromptOutput = null;
+            ({ speakOutput, repromptOutput } = await HandleNumericAnswer(clickedListItemNum, handlerInput));
         }
 
         return handlerInput.responseBuilder
@@ -400,12 +391,6 @@ const YesNoIntentHandler = {
         // Yes / true & no / false handling is centralized as these
         // answers have similar meaning in the quiz context.
         let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
-
-        // User doesn't want to continue with the skill - stop
-        if (repromptOutput === -1) {
-            // Stop the skill
-            repromptOutput = null;
-        }
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -436,12 +421,6 @@ const TrueFalseIntentHandler = {
         // answers have similar meaning in the quiz context.
         let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
 
-        // User doesn't want to continue with the skill - stop
-        if (repromptOutput === -1) {
-            // Stop the skill
-            repromptOutput = null;
-        }
-
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -459,6 +438,11 @@ async function HandleYesNoTrueFalse(isYes, handlerInput) {
 
     repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
+    // User doesn't want to continue with the skill - stop
+    if (repromptOutput === -1) {
+        // Stop the skill
+        repromptOutput = null;
+    }
     return { speakOutput, repromptOutput };
 }
 
@@ -473,23 +457,9 @@ const NumericAnswerIntentHandler = {
     },
     async handle(handlerInput) {
         // Get attributes
-        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
         const numericAnswer = Alexa.getSlotValue(handlerInput.requestEnvelope, "numericAnswer");
 
-        // Handle numeric answer, which corresponds to the answer number
-        let { speakOutput, repromptOutput } = await trainingHandler.handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
-
-
-        repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
-
-        // User doesn't want to continue with the skill - stop
-        if (repromptOutput === -1) {
-            // Stop the skill
-            repromptOutput = null;
-        }
-
+        let { speakOutput, repromptOutput } = await HandleNumericAnswer(numericAnswer, handlerInput);
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -498,6 +468,27 @@ const NumericAnswerIntentHandler = {
     }
 
 };
+
+
+async function HandleNumericAnswer(numericAnswer, handlerInput) {
+    // Get attributes
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+    const userId = Alexa.getUserId(handlerInput.requestEnvelope);
+
+    // Handle numeric answer, which corresponds to the answer number
+    let { speakOutput, repromptOutput } = await trainingHandler.handleNumericIntent(numericAnswer, userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage());
+
+    repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+
+    // User doesn't want to continue with the skill - stop
+    if (repromptOutput === -1) {
+        // Stop the skill
+        repromptOutput = null;
+    }
+
+    return { speakOutput, repromptOutput };
+}
 
 // -------------------------------------------------------------------
 // Utility functions

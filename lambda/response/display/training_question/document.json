@@ -28,7 +28,7 @@
                         "arguments": [
                             "ListItemSelected",
                             "${ordinal}",
-                            "${data.item}"
+                            "${listItems.item}"
                         ]
                 }
             }
