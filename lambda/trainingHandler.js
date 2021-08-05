@@ -1,6 +1,7 @@
 "use strict";
 const config = require("./config.js");
 const dbHandler = require("./dbHandler.js");
+const uiHandler = require("./uiHandler.js");
 
 // -------------------------------------------------------------------
 // Active training handler functions
@@ -61,8 +62,8 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
             speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
                 answerAsText: answerAsText
             });
-            speakOutput += " " + sessionAttributes.questionText;
-            repromptOutput = sessionAttributes.questionText;
+            speakOutput += " " + sessionAttributes.questionTextWithAnswers;
+            repromptOutput = sessionAttributes.questionTextWithAnswers;
         } else {
             // Repeat what the user said
             let introOutput = handlerInput.t("TRAINING_REPEAT_ANSWER", {
@@ -109,12 +110,12 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
             speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
                 answerAsText: numericAnswer
             });
-            speakOutput += " " + sessionAttributes.questionText;
-            repromptOutput = sessionAttributes.questionText;
+            speakOutput += " " + sessionAttributes.questionTextWithAnswers;
+            repromptOutput = sessionAttributes.questionTextWithAnswers;
         } else {
             // Repeat what the user said
             const answerAsInt = parseInt(numericAnswer);
-            const answerText = getTextForPossibleAnswer(answerAsInt, sessionAttributes.possibleAnswers);
+            const answerText = getTextForPossibleAnswer(answerAsInt, sessionAttributes.possibleAnswersString);
             if (answerText !== undefined && answerText !== null) {
                 let introOutput = handlerInput.t("TRAINING_REPEAT_NUMERIC_ANSWER", {
                     answerAsInt: answerAsInt,
@@ -128,8 +129,8 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
                 speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
                     answerAsText: answerAsInt
                 });
-                speakOutput += " " + sessionAttributes.questionText;
-                repromptOutput = sessionAttributes.questionText;
+                speakOutput += " " + sessionAttributes.questionTextWithAnswers;
+                repromptOutput = sessionAttributes.questionTextWithAnswers;
             }
         }
     } else {
@@ -191,6 +192,8 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
         speakOutput += " " + repromptOutput;
     } else {
         ({ speakOutput, repromptOutput } = await getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language));
+        // Add to UI (APL)
+        uiHandler.showQuestionUi(handlerInput, sessionAttributes.questionText, sessionAttributes.possibleAnswersString);
     }
 
     return { speakOutput, repromptOutput };
@@ -230,12 +233,15 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
         });
 
         // Depending on question type, modify the text for better speech output
+        // Store to session attributes
         if (questionData.QuestionType === config.questionType.YES_NO) {
             // add possible answers like: "yes or no?"
-            questionData.QuestionText += " " + handlerInput.t("TRAINING_YES_NO_OPTIONS");
+            sessionAttributes.questionTextWithAnswers = questionData.QuestionText + " " + handlerInput.t("TRAINING_YES_NO_OPTIONS");
         } else if (questionData.QuestionType === config.questionType.NUMERIC) {
             // Parse possible answers
-            questionData.QuestionText += convertPossibleAnswersForSpeech(questionData.PossibleAnswers);
+            sessionAttributes.questionTextWithAnswers = questionData.QuestionText + convertPossibleAnswersForSpeech(questionData.PossibleAnswers);
+        } else {
+            sessionAttributes.questionTextWithAnswers = questionData.QuestionText;
         }
 
         // Store new question data
@@ -243,11 +249,11 @@ async function getQuestionText(userId, sessionAttributes, persistentAttributes, 
         sessionAttributes.questionType = questionData.QuestionType;
         sessionAttributes.correctAnswer = questionData.CorrectAnswer;
         sessionAttributes.questionText = questionData.QuestionText;
-        sessionAttributes.possibleAnswers = questionData.PossibleAnswers;
+        sessionAttributes.possibleAnswersString = questionData.PossibleAnswers;
         sessionAttributes.questionsAskedThisSession.push(questionData.QuestionId);
 
-        speakOutput = introText + sessionAttributes.questionText;
-        repromptOutput = sessionAttributes.questionText;
+        speakOutput = introText + sessionAttributes.questionTextWithAnswers;
+        repromptOutput = sessionAttributes.questionTextWithAnswers;
     }
 
     return { speakOutput, repromptOutput };
@@ -359,8 +365,6 @@ async function answerWrong(userId, sessionAttributes, persistentAttributes, hand
 
     return handlerInput.t("TRAINING_ANSWER_WRONG");
 }
-
-
 
 // -------------------------------------------------------------------
 // Training state handler functions

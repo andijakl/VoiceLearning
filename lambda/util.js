@@ -63,12 +63,7 @@ module.exports.addAplIfSupported = function addAplIfSupported(handlerInput, toke
                 "type": "Alexa.Presentation.APL.RenderDocument",
                 "token": token,
                 "document": document,
-                "datasources": {
-                    "data": {
-                        "type": "object",
-                        "properties": data
-                    }
-                }
+                "datasources": data
             });
     }
 };
@@ -78,11 +73,6 @@ module.exports.getAplADirective = function getAplADirective(token, document, dat
         "type": "Alexa.Presentation.APLA.RenderDocument",
         "token": token,
         "document": document,
-        "datasources": {
-            "data": {
-                "type": "object",
-                "properties": data
-            }
-        }
+        "datasources": data
     };
 };

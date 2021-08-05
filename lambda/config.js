@@ -11,5 +11,8 @@ module.exports = {
         NUMERIC: 2
     },
     numQuestionsPerTraining: 7,
-    useStudentName: false
+    useStudentName: false,
+    aplTokens: {
+        QUESTION: "questionToken"
+    }
 };

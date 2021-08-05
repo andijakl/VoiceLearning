@@ -1,0 +1,31 @@
+{
+    "textListData": {
+        "type": "object",
+        "objectId": "textListSample",
+        "backgroundImage": {
+            "contentDescription": null,
+            "smallSourceUrl": null,
+            "largeSourceUrl": null,
+            "sources": [
+                {
+                    "url": "https://d2o906d8ln7ui1.cloudfront.net/images/templates_v3/textlist/AlexaTextListBackground_Dark.png",
+                    "size": "large"
+                }
+            ]
+        },
+        "title": "Voice Learning",
+        "listItems": [
+            {
+                "primaryText": "Peonies & Petals Nursery"
+            }
+        ],
+        "primaryAction": {
+            "type": "SendEvent",
+                "arguments": [
+                    "ListItemSelected",
+                    "${ordinal}"
+                ]
+        },
+        "logoUrl": "https://d2o906d8ln7ui1.cloudfront.net/images/templates_v3/logo/logo-modern-botanical-white.png"
+    }
+}

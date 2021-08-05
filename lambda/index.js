@@ -1,10 +1,13 @@
 "use strict";
 
 // Warning: only deploy with Powershell 7, issues with "normal" PowerShell: https://github.com/alexa/ask-cli/issues/59
+// TODO: maybe add dynamic entities, see: https://developer.amazon.com/en-US/docs/alexa/custom-skills/use-dynamic-entities-for-customized-interactions.html
+// https://github.com/alexa-samples/dynamic-entities-demo
 
 const Alexa = require("ask-sdk-core");
 const i18next = require("i18next");
 const sprintf = require("sprintf-js").sprintf;
+//const util = require("./util");
 const { DynamoDbPersistenceAdapter } = require("ask-sdk-dynamodb-persistence-adapter");
 // Make sure the Dynamo DB persistence is always in the same region by providing an own instance
 const AWS = require("aws-sdk");
@@ -27,6 +30,7 @@ const languageStrings = {
 
 // APL
 //const aplWelcomeDocument = require("./apl_welcome.json");
+//const aplTrainingQuestionDocument = require("./response/display/training_question/document.json");
 
 // Tokens used when sending the APL directives
 //const APL_TOKEN_WELCOME = "welcomeToken";
@@ -100,26 +104,20 @@ const LaunchRequestHandler = {
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
         // TODO: Define nice looking APL
-        // if (Alexa.getSupportedInterfaces(handlerInput.requestEnvelope)["Alexa.Presentation.APL"]){
-        //     console.log("APL is supported");
-        //     // Add the RenderDocument directive to the responseBuilder
-        //     responseBuilder.addDirective({
-        //         type: "Alexa.Presentation.APL.RenderDocument",
-        //         token: APL_TOKEN_WELCOME,
-        //         document: aplWelcomeDocument,
-        //         datasources: {
-        //             data: {
-        //                 text: {
-        //                     //type: "object",
-        //                     welcomeMessage: speakOutput
-        //                 }
+        // const dataSources = {
+        //     textListData: {
+        //         title: speakOutput,
+        //         "listItems": [
+        //             {
+        //                 "primaryText": "Resume"
+        //             },
+        //             {
+        //                 "primaryText": "Start new course"
         //             }
-        //         }
-        //     });
-        // } else {
-        //     // User's device does not support APL
-        //     console.log("APL is NOT supported");
-        // }
+        //         ]
+        //     }
+        // };
+        // util.addAplIfSupported(handlerInput, config.aplTokens.QUESTION, aplTrainingQuestionDocument, dataSources);
 
         // TODO: Alexa Conversations crashes without meaningful error message when doing this.
         // Therefore, not using Alexa Conversations for now.
@@ -148,6 +146,22 @@ const LaunchRequestHandler = {
         return responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
+            .getResponse();
+    }
+};
+
+// -------------------------------------------------------------------
+// APL Intent handlers
+const AplTrainingQuestionEventHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "Alexa.Presentation.APL.UserEvent"
+            && handlerInput.requestEnvelope.request.arguments[0] === "ListItemSelected";
+    },
+    handle(handlerInput) {
+        //const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.source.id + "!";
+        const speakOutput = "Thank you for clicking on " + handlerInput.requestEnvelope.request.arguments[1] + "!";
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
             .getResponse();
     }
 };
@@ -697,6 +711,8 @@ exports.handler = Alexa.SkillBuilders.custom()
         ResumeCourseIntentHandler,
         // Data handling
         DeleteDataIntentHandler,
+        // APL
+        AplTrainingQuestionEventHandler,
         // Generic Alexa
         HelpIntentHandler,
         CancelAndStopIntentHandler,
