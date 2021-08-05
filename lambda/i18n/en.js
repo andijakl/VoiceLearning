@@ -24,6 +24,8 @@ module.exports = {
         AVAILABLE_COURSES_LIST: "You can choose one of these available courses: {{availableTrainings}}.",
         AVAILABLE_COURSES_OR: " or ",
 
+        UI_AVAILABLE_COURSES_TITLE: "Available Courses",
+
         SELECTED_COURSE_START_TRAINING: "You chose the course: {{currentTrainingName}}. Let's get started!",
         RESUMING_COURSE_START_TRAINING: "Resuming course {{currentTrainingName}}.",
         RESTART_COURSE_START_TRAINING: "Restarting course {{currentTrainingName}}.",

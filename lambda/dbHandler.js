@@ -46,7 +46,7 @@ module.exports.getTrainingList = async function getTrainingList(language) {
     }
 };
 
-module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech(language, lastSeparator) {
+module.exports.getTrainingNames = async function getTrainingNames(language) {
     let trainings = await module.exports.getTrainingList(language);
     //console.log("got trainings: " + JSON.stringify(trainings));
     // Well, I'm sure there is some more elegant alternative for this in JS.
@@ -54,8 +54,15 @@ module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpe
     trainings.forEach((item) => {
         trainingNames.push(item.TrainingName);
     });
-    //return trainingNames.join(", ");
-    // AVAILABLE_COURSES_OR
+    return trainingNames;
+};
+
+module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech(language, lastSeparator) {
+    let trainingNames = await module.exports.getTrainingNames(language);
+    return module.exports.getTrainingNamesForSpeechListAvailable(trainingNames, lastSeparator);
+};
+
+module.exports.getTrainingNamesForSpeechListAvailable = function getTrainingNamesForSpeechListAvailable(trainingNames, lastSeparator) {
     return trainingNames.slice(0, -1).join(", ") + lastSeparator + trainingNames.slice(-1);
 };
 

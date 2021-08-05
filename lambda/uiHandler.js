@@ -1,8 +1,9 @@
 "use strict";
 const config = require("./config.js");
 const util = require("./util");
-const aplTrainingQuestionDocument = require("./response/display/training_question/document.json");
 const aplWelcomeDocument = require("./response/display/welcome/document.json");
+const aplChooseCourseDocument = require("./response/display/choose_course/document.json");
+const aplTrainingQuestionDocument = require("./response/display/training_question/document.json");
 
 module.exports.showQuestionUi = function showQuestionUi(questionText, possibleAnswersString, handlerInput) {
     const possibleAnswers = possibleAnswersString.split("|");
@@ -18,7 +19,22 @@ module.exports.showQuestionUi = function showQuestionUi(questionText, possibleAn
         }
     };
     util.addAplIfSupported(handlerInput, config.aplTokens.QUESTION, aplTrainingQuestionDocument, dataSources);
+};
 
+module.exports.showChooseCourseUi = function showChooseCourseUi(availableTrainings, handlerInput) {
+    console.log("showChooseCourseUi 1: " + JSON.stringify(availableTrainings));
+    let textListItemList = [];
+    availableTrainings.forEach((item) => {
+        textListItemList.push({ "primaryText": item });
+    });
+    console.log("showChooseCourseUi 2: " + JSON.stringify(textListItemList));
+    const dataSources = {
+        textListData: {
+            title: handlerInput.t("UI_AVAILABLE_COURSES_TITLE"),
+            "listItems": textListItemList
+        }
+    };
+    util.addAplIfSupported(handlerInput, config.aplTokens.CHOOSE_COURSE, aplChooseCourseDocument, dataSources);
 };
 
 module.exports.showWelcomeUi = function showWelcomeUi(welcomeBack, availableTrainings, finishedTrainings, totalQuestionsAsked, handlerInput) {

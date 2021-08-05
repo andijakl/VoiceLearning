@@ -8,7 +8,7 @@ module.exports = {
         WELCOME_PERSONALIZED_REPROMPT_NONAME: "Würdest du gerne den letzten Kurs {{currentTrainingName}} fortsetzen oder einen anderen Kurs starten?",
 
         UI_WELCOME: "Willkommen bei Voice Learning!",
-        UI_WELCOME_PERSONALIZED: "Welcome zurück!",
+        UI_WELCOME_PERSONALIZED: "Willkommen zurück!",
         UI_WELCOME_FINISHED_TRAININGS: "Du hast bereits {{finishedTrainings}} Trainings abgeschlossen und {{totalQuestionsAsked}} Fragen beantwortet.",
         UI_HINT_RESUME_START_ANOTHER: "Sag: \"fortsetzen\" oder \"anderen Kurs starten\"",
         UI_HINT_CHOOSE_COURSE: "Sag: starte {{availableTrainings}}",
@@ -23,6 +23,8 @@ module.exports = {
         AVAILABLE_COURSES_REPROMPT: "Bitte wähle einen der folgenden Kurse: {{availableTrainings}}.",
         AVAILABLE_COURSES_LIST: "Du kannst einen dieser Kurse wählen: {{availableTrainings}}.",
         AVAILABLE_COURSES_OR: " oder ",
+
+        UI_AVAILABLE_COURSES_TITLE: "Verfügbare Kurse",
 
         SELECTED_COURSE_START_TRAINING: "Du hast den Kurs {{currentTrainingName}} gewählt. Legen wir los!",
         RESUMING_COURSE_START_TRAINING: "Setze den Kurs {{currentTrainingName}} fort.",

@@ -105,21 +105,6 @@ const LaunchRequestHandler = {
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
         uiHandler.showWelcomeUi(welcomeBack, availableTrainings, persistentAttributes.finishedTrainings, persistentAttributes.totalQuestionsAsked, handlerInput);
-        // TODO: Define nice looking APL
-        // const dataSources = {
-        //     textListData: {
-        //         title: speakOutput,
-        //         "listItems": [
-        //             {
-        //                 "primaryText": "Resume"
-        //             },
-        //             {
-        //                 "primaryText": "Start new course"
-        //             }
-        //         ]
-        //     }
-        // };
-        // util.addAplIfSupported(handlerInput, config.aplTokens.QUESTION, aplTrainingQuestionDocument, dataSources);
 
         return responseBuilder
             .speak(speakOutput)
@@ -196,49 +181,7 @@ const ChooseCourseIntentHandler = {
         // Get actual main slot value, not the spoken synonym
         const userTrainingName = getCanonicalSlot(trainingNameSlot);
 
-        let speakOutput = null;
-        let repromptOutput = null;
-
-        // Get attributes
-        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-        const userId = Alexa.getUserId(handlerInput.requestEnvelope);
-
-        //console.log("User selected training: " + userTrainingName);
-
-        if (userTrainingName === undefined || userTrainingName === null) {
-            speakOutput = handlerInput.t("ERROR_COURSE_NOT_UNDERSTOOD");
-            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
-            repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
-                availableTrainings: availableTrainings
-            });
-            speakOutput += " " + repromptOutput;
-        } else {
-            // Match slot value with available courses and get its ID from the DB
-            const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes, getMainLanguage());
-            if (selectedTrainingInfo !== null) {
-                // Training selected successfully
-                let introOutput = handlerInput.t("SELECTED_COURSE_START_TRAINING", {
-                    currentTrainingName: persistentAttributes.currentTrainingName
-                });
-                // Get question
-                ({ speakOutput, repromptOutput } = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
-                speakOutput = introOutput + " " + speakOutput;
-            } else {
-                // Unable to match slot to training in DB
-                speakOutput = handlerInput.t("ERROR_COURSE_NOT_FOUND", {
-                    userTrainingName: userTrainingName
-                });
-                const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
-                repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
-                    availableTrainings: availableTrainings
-                });
-                speakOutput += " " + repromptOutput;
-            }
-        }
-
-
-        repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+        let { speakOutput, repromptOutput } = await handleChooseCourse(userTrainingName, handlerInput);
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -246,6 +189,53 @@ const ChooseCourseIntentHandler = {
             .getResponse();
     }
 };
+
+async function handleChooseCourse(userTrainingName, handlerInput) {
+    let speakOutput = null;
+    let repromptOutput = null;
+
+    // Get attributes
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+    const userId = Alexa.getUserId(handlerInput.requestEnvelope);
+
+    //console.log("User selected training: " + userTrainingName);
+
+    if (userTrainingName === undefined || userTrainingName === null) {
+        speakOutput = handlerInput.t("ERROR_COURSE_NOT_UNDERSTOOD");
+        const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+        repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
+            availableTrainings: availableTrainings
+        });
+        speakOutput += " " + repromptOutput;
+    } else {
+        // Match slot value with available courses and get its ID from the DB
+        const selectedTrainingInfo = await trainingHandler.selectTraining(userTrainingName, persistentAttributes, getMainLanguage());
+        if (selectedTrainingInfo !== null) {
+            // Training selected successfully
+            let introOutput = handlerInput.t("SELECTED_COURSE_START_TRAINING", {
+                currentTrainingName: persistentAttributes.currentTrainingName
+            });
+            // Get question
+            ({ speakOutput, repromptOutput } = await trainingHandler.startNewTraining(userId, sessionAttributes, persistentAttributes, handlerInput, getMainLanguage()));
+            speakOutput = introOutput + " " + speakOutput;
+        } else {
+            // Unable to match slot to training in DB
+            speakOutput = handlerInput.t("ERROR_COURSE_NOT_FOUND", {
+                userTrainingName: userTrainingName
+            });
+            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+            repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
+                availableTrainings: availableTrainings
+            });
+            speakOutput += " " + repromptOutput;
+        }
+    }
+
+    repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
+
+    return { speakOutput, repromptOutput };
+}
 
 
 const ListCoursesIntentHandler = {
@@ -263,7 +253,8 @@ const ListCoursesIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-        const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+        const trainingNames = await dbHandler.getTrainingNames(getMainLanguage());
+        const availableTrainings = await dbHandler.getTrainingNamesForSpeechListAvailable(trainingNames, handlerInput.t("AVAILABLE_COURSES_OR"));
         speakOutput = handlerInput.t("AVAILABLE_COURSES_LIST", {
             availableTrainings: availableTrainings
         });
@@ -277,6 +268,9 @@ const ListCoursesIntentHandler = {
             // which would result in listing the courses twice if the user is asking
             // for available courses at that point.
             speakOutput += " " + repromptOutput;
+        } else {
+            // Show UI only if we're in the choose course state
+            uiHandler.showChooseCourseUi(trainingNames, handlerInput);
         }
 
         return handlerInput.responseBuilder
@@ -371,6 +365,29 @@ const AplTrainingQuestionEventHandler = {
             // Handle multiple choice / numeric answers
             ({ speakOutput, repromptOutput } = await HandleNumericAnswer(clickedListItemNum, handlerInput));
         }
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(repromptOutput)
+            .getResponse();
+    }
+};
+
+
+const AplChooseCourseEventHandler = {
+    canHandle(handlerInput) {
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "Alexa.Presentation.APL.UserEvent"
+            && handlerInput.requestEnvelope.request.arguments[0] === "ListItemSelected"
+            && (sessionAttributes.state == config.states.CHOOSE_COURSE);
+    },
+    async handle(handlerInput) {
+        const clickedListItemNum = handlerInput.requestEnvelope.request.arguments[1];
+
+        const trainingNames = await dbHandler.getTrainingNames(getMainLanguage());
+        const userTrainingName = trainingNames[clickedListItemNum - 1];
+
+        let { speakOutput, repromptOutput } = await handleChooseCourse(userTrainingName, handlerInput);
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -705,6 +722,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         DeleteDataIntentHandler,
         // APL
         AplTrainingQuestionEventHandler,
+        AplChooseCourseEventHandler,
         // Generic Alexa
         HelpIntentHandler,
         CancelAndStopIntentHandler,
