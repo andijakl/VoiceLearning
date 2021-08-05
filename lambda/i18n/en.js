@@ -1,9 +1,17 @@
 module.exports = {
     translation: {
+        TITLE: "Voice Learning",
+
         WELCOME_NONAME: "Hi and welcome to voice learning! I can help you understand the most important concepts of your courses. I have content for these courses: {{availableTrainings}}. Which course should I start?",
         WELCOME_REPROMPT_NONAME: "Please choose one of these courses: {{availableTrainings}}.",
         WELCOME_PERSONALIZED_NONAME: "Welcome back! {{prompt}}",
         WELCOME_PERSONALIZED_REPROMPT_NONAME: "Would you like to resume your last course {{currentTrainingName}} or start another course?",
+
+        UI_WELCOME: "Welcome to Voice Learning!",
+        UI_WELCOME_PERSONALIZED: "Welcome back!",
+        UI_WELCOME_FINISHED_TRAININGS: "You already completed {{finishedTrainings}} trainings and answered {{totalQuestionsAsked}} questions.",
+        UI_HINT_RESUME_START_ANOTHER: "Say: \"resume\" or \"start another course\"",
+        UI_HINT_CHOOSE_COURSE: "Say: start {{availableTrainings}}",
 
         WELCOME: "Hi and welcome to voice learning! I can help you understand the most important concepts of your courses. First, please tell me your first name!",
         WELCOME_REPROMPT: "Please tell me your first name.",

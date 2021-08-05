@@ -195,8 +195,8 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
         // Add to UI (APL)
         if (sessionAttributes.state === config.states.TRAINING) {
             // Still in training mode? Update UI with new question
-            console.log("Calling show question UI: " + sessionAttributes.possibleAnswersString);
-            uiHandler.showQuestionUi(handlerInput, sessionAttributes.questionText, sessionAttributes.possibleAnswersString);
+            //console.log("Calling show question UI: " + sessionAttributes.possibleAnswersString);
+            uiHandler.showQuestionUi(sessionAttributes.questionText, sessionAttributes.possibleAnswersString, handlerInput);
         }
     }
 

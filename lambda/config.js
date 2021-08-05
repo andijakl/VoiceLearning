@@ -10,9 +10,10 @@ module.exports = {
         YES_NO: 1,
         NUMERIC: 2
     },
-    numQuestionsPerTraining: 7,
+    numQuestionsPerTraining: 3,
     useStudentName: false,
     aplTokens: {
-        QUESTION: "questionToken"
+        QUESTION: "questionToken",
+        WELCOME: "welcomeToken"
     }
 };

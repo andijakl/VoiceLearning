@@ -22,6 +22,7 @@ const persistenceAdapter = new DynamoDbPersistenceAdapter({
 const config = require("./config.js");
 const trainingHandler = require("./trainingHandler.js");
 const dbHandler = require("./dbHandler.js");
+const uiHandler = require("./uiHandler.js");
 
 const languageStrings = {
     "en": require("./i18n/en"),
@@ -42,6 +43,8 @@ const LaunchRequestHandler = {
         let responseBuilder = handlerInput.responseBuilder;
         let speakOutput = null;
         let repromptOutput = null;
+        let welcomeBack = false;
+        let availableTrainings = null;
         //let startAlexaConversationsDialog = null;
 
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
@@ -53,6 +56,7 @@ const LaunchRequestHandler = {
         if (!config.useStudentName) {
             // Do not ask for student name
             if (persistentAttributes.currentTrainingName) {
+                welcomeBack = true;
                 // User has already started a training - ask to resume
                 const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT_NONAME", {
                     currentTrainingName: persistentAttributes.currentTrainingName
@@ -64,7 +68,7 @@ const LaunchRequestHandler = {
                 sessionAttributes.state = config.states.CHOOSE_COURSE;
             } else {
                 // User has not started a course yet - treat as a new user!
-                const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+                availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
                 speakOutput = handlerInput.t("WELCOME_NONAME", {
                     availableTrainings: availableTrainings
                 });
@@ -78,6 +82,7 @@ const LaunchRequestHandler = {
         } else {
             // Use student name
             if (persistentAttributes.studentName) {
+                welcomeBack = true;
                 // TODO: Check if there is a course to resume!
                 const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT");
                 speakOutput = handlerInput.t("WELCOME_PERSONALIZED", {
@@ -99,6 +104,7 @@ const LaunchRequestHandler = {
 
         repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
+        uiHandler.showWelcomeUi(welcomeBack, availableTrainings, persistentAttributes.finishedTrainings, persistentAttributes.totalQuestionsAsked, handlerInput);
         // TODO: Define nice looking APL
         // const dataSources = {
         //     textListData: {
