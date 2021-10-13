@@ -1,3 +1,4 @@
+// @ts-check
 "use strict";
 
 // Warning: only deploy with Powershell 7, issues with "normal" PowerShell: https://github.com/alexa/ask-cli/issues/59
