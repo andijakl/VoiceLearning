@@ -1,7 +1,7 @@
 "use strict";
 
 const config = require("./config.js");
-const util  = require("./util");
+const util = require("./util");
 const dbHandler = require("./dbHandler.js");
 const trainingHandler = require("./trainingHandler.js");
 
@@ -12,7 +12,7 @@ const SetFirstNameApiHandler = {
         return util.isApiRequest(handlerInput, "SetFirstName");
     },
     async handle(handlerInput) {
-        console.log("Api Request [SetFirstName]: ", JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
+        //console.log("Api Request [SetFirstName]: ", JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
@@ -27,17 +27,17 @@ const SetFirstNameApiHandler = {
 
         let response = {
             apiResponse: {
-                firstName : studentName,
-                courseList : availableTrainings
+                firstName: studentName,
+                courseList: availableTrainings
             }
         };
-        
+
         // Save persistent attributes
         handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
         await handlerInput.attributesManager.savePersistentAttributes();
         handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-        
-        console.log("Api Response [SetFirstName]: ", JSON.stringify(response, null, 2));
+
+        //console.log("Api Response [SetFirstName]: ", JSON.stringify(response, null, 2));
         return response;
     }
 };
@@ -49,12 +49,12 @@ const StartTrainingApiHandler = {
     },
     async handle(handlerInput) {
         console.log("Api Request [StartTraining]: ", JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
-        
+
         // Get attributes
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         //const userId = Alexa.getUserId(handlerInput.requestEnvelope);
-        
+
         // First get our request entity and grab the training name passed in the API call
         const args = util.getApiArguments(handlerInput);
         const userTrainingName = args.courseNameArgument;
@@ -67,7 +67,7 @@ const StartTrainingApiHandler = {
 
             // Hand over to traditional intent handler to run the actual training.
             return {
-                directives : [{
+                directives: [{
                     type: "Dialog.DelegateRequest",
                     target: "skill",
                     period: {
@@ -84,8 +84,9 @@ const StartTrainingApiHandler = {
                                 }
                             }
                         }
-                    }}],
-                apiResponse : {}
+                    }
+                }],
+                apiResponse: {}
             };
             // let introOutput = handlerInput.t("SELECTED_COURSE_START_TRAINING", {
             //     currentTrainingName: persistentAttributes.currentTrainingName
@@ -105,18 +106,18 @@ const StartTrainingApiHandler = {
             // });
             // speakOutput += " " + repromptOutput;
         }
-        
+
         let response = {
             apiResponse: {
-                returnedCoursesProperty : persistentAttributes.currentTrainingName
+                returnedCoursesProperty: persistentAttributes.currentTrainingName
             }
         };
-        
+
         handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
         await handlerInput.attributesManager.savePersistentAttributes();
         handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-        
-        console.log("Api Response [StartTraining]: ", JSON.stringify(response, null, 2));
+
+        //console.log("Api Response [StartTraining]: ", JSON.stringify(response, null, 2));
         return response;
     }
 };
@@ -135,7 +136,7 @@ const ListTrainingsApiHandler = {
 
         let response = {
             apiResponse: {
-                returnedCoursesProperty : availableTrainings
+                returnedCoursesProperty: availableTrainings
             }
         };
         console.log("Api Response [ListTrainings]: ", JSON.stringify(response, null, 2));

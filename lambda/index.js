@@ -47,7 +47,6 @@ const LaunchRequestHandler = {
         let repromptOutput = null;
         let welcomeBack = false;
         let availableTrainings = null;
-        //let startAlexaConversationsDialog = null;
 
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
@@ -93,14 +92,12 @@ const LaunchRequestHandler = {
                 });
                 repromptOutput = speakQuestion;
                 sessionAttributes.state = config.states.CHOOSE_COURSE;
-                //startAlexaConversationsDialog = "StartTraining";
             } else {
                 speakOutput = handlerInput.t("WELCOME");
                 repromptOutput = handlerInput.t("WELCOME_REPROMPT");
                 // Initialize new user
                 trainingHandler.initializeUser(sessionAttributes, persistentAttributes);
                 sessionAttributes.state = config.states.STUDENT_NAME;
-                //startAlexaConversationsDialog = "SetFirstName";
             }
         }
 
@@ -457,7 +454,7 @@ const TrueFalseIntentHandler = {
         //console.log("slot value: " + trueFalseAnswerSlot);
         // Get actual main slot value, not the spoken synonym
         const trueFalseAnswer = getCanonicalSlot(trueFalseAnswerSlot);
-        console.log("Canonical: " + trueFalseAnswer);
+        //console.log("Canonical: " + trueFalseAnswer);
 
         const isYes = trueFalseAnswer.localeCompare("true", undefined, { sensitivity: "accent" }) === 0;
 
@@ -622,10 +619,16 @@ const CancelAndStopIntentHandler = {
             && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.CancelIntent"
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.StopIntent");
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
+        let repromptOutput = null;
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+        sessionAttributes.state = config.states.CHOOSE_COURSE;
         const speakOutput = handlerInput.t("EXIT");
+        await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
         return handlerInput.responseBuilder
             .speak(speakOutput)
+            .withShouldEndSession(true)
             .getResponse();
     }
 };
