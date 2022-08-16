@@ -7,7 +7,8 @@
 
 const Alexa = require("ask-sdk-core");
 const i18next = require("i18next");
-const sprintf = require("sprintf-js").sprintf;
+//const sprintf = require("sprintf-js").sprintf;
+const sprintf = require("i18next-sprintf-postprocessor");
 //const util = require("./util");
 const { DynamoDbPersistenceAdapter } = require("ask-sdk-dynamodb-persistence-adapter");
 // Make sure the Dynamo DB persistence is always in the same region by providing an own instance
@@ -17,7 +18,7 @@ const dynamoDBInstance = new AWS.DynamoDB({ apiVersion: "latest" });
 const persistenceAdapter = new DynamoDbPersistenceAdapter({
     // Disable process not defined warning
     // eslint-disable-next-line no-undef
-    tableName: process.env.DYNAMODB_TABLE_NAME,
+    tableName: process.env.DYNAMODB_TABLE_NAME || "Learning-Assistant",
     dynamoDBClient: dynamoDBInstance
 });
 const config = require("./config.js");
@@ -700,7 +701,7 @@ const ErrorHandler = {
 
 const LocalizationInterceptor = {
     process(handlerInput) {
-        i18next
+        i18next.use(sprintf)
             .init({
                 lng: handlerInput.requestEnvelope.request.locale,
                 fallbackLng: "en", // fallback to EN if locale doesn't exist
@@ -721,7 +722,7 @@ const LocalizationInterceptor = {
 };
 
 function getMainLanguage() {
-    return (i18next.language) ? i18next.language.substring(0, 2) : "en";
+    return (i18next.resolvedLanguage) ? i18next.resolvedLanguage.substring(0, 2) : "en";
 }
 
 exports.handler = Alexa.SkillBuilders.custom()
