@@ -7,24 +7,30 @@ const aplTrainingQuestionDocument = require("./response/display/training_questio
 const aplTrainingQuestionDocument2 = require("./response/display/training_q/document.json");
 const aplFinishedDocument = require("./response/display/training_finished/document.json");
 
-module.exports.showQuestionUi2 = function showQuestionUi2(trainingName, questionText, possibleAnswersString, handlerInput) {
+module.exports.showQuestionUi2 = function showQuestionUi2(trainingName, questionType, questionText, possibleAnswersString, handlerInput) {
     const possibleAnswers = possibleAnswersString.split("|");
     // let textListItemList = [];
     // for (const [, curAnswerText] of possibleAnswers.entries()) {
     //     textListItemList.push({ "primaryText": curAnswerText });
     // }
+    let footerHintText = null;
+    if (questionType === config.questionType.YES_NO) {
+        footerHintText = handlerInput.t("UI_HINT_YES_NO");
+    } else if (questionType === config.questionType.NUMERIC) {
+        footerHintText = handlerInput.t("UI_HINT_NUMERIC");
+    }
 
     const dataSources = {
         multipleChoiceTemplateData: {
             "type": "object",
             "properties": {
                 "backgroundImage": "https://alexa-voice-learning-images.s3.eu-west-1.amazonaws.com/VoiceLearning-Cap-Large-Blue.png",
-                "titleText": trainingName,
+                //"titleText": trainingName,
                 "primaryText": questionText,
                 "choices": possibleAnswers,
                 "choiceListType": "number",
                 "headerAttributionImage": "https://alexa-voice-learning-images.s3.eu-west-1.amazonaws.com/VoiceLearningSkill.png",
-                "footerHintText": "Say for example: \"The Answer is 1.\""
+                "footerHintText": footerHintText
             }
         }
     };
@@ -48,12 +54,10 @@ module.exports.showQuestionUi = function showQuestionUi(questionText, possibleAn
 };
 
 module.exports.showChooseCourseUi = function showChooseCourseUi(availableTrainings, handlerInput) {
-    console.log("showChooseCourseUi 1: " + JSON.stringify(availableTrainings));
     let textListItemList = [];
     availableTrainings.forEach((item) => {
         textListItemList.push({ "primaryText": item });
     });
-    console.log("showChooseCourseUi 2: " + JSON.stringify(textListItemList));
     const dataSources = {
         textListData: {
             title: handlerInput.t("UI_AVAILABLE_COURSES_TITLE"),

@@ -71,6 +71,9 @@ module.exports = {
         UI_TRAINING_FINISHED_HEADLINE: "Fertig!",
         UI_TRAINING_FINISHED_TEXT: "Du hast {{score}} von {{questionNumber}} Punkten erreicht<br>Du hast bereits {{finishedTrainings}} Trainings abgeschlossen.",
         UI_TRAINING_FINISHED_BUTTON_AGAIN: "Noch einmal",
-        UI_TRAINING_FINISHED_BUTTON_END: "Beenden"
+        UI_TRAINING_FINISHED_BUTTON_END: "Beenden",
+
+        UI_HINT_YES_NO: "Sag zum Beispiel: \"Das ist richtig.\"",
+        UI_HINT_NUMERIC: "Sag zum Beispiel: \"Die Antwort ist Eins.\""
     }
 };

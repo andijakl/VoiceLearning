@@ -196,7 +196,7 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
             // Still in training mode? Update UI with new question
             //console.log("Calling show question UI: " + sessionAttributes.possibleAnswersString);
             //uiHandler.showQuestionUi(sessionAttributes.questionText, sessionAttributes.possibleAnswersString, handlerInput);
-            uiHandler.showQuestionUi2(sessionAttributes.TrainingName, sessionAttributes.questionText, sessionAttributes.possibleAnswersString, handlerInput);
+            uiHandler.showQuestionUi2(sessionAttributes.currentTrainingName, sessionAttributes.questionType, sessionAttributes.questionText, sessionAttributes.possibleAnswersString, handlerInput);
         }
     }
 

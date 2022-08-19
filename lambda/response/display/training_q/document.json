@@ -56,8 +56,8 @@
             "item": {
                 "description": "Choice item",
                 "type": "Container",
-                "paddingTop": "@spacing2XSmall",
-                "width": "${choiceListDirection == 'row' ? '48%' : @choiceColumnWidth}",
+                "paddingTop": "@spacing3XSmall",
+                "width": "${choiceListDirection == 'row' ? '49%' : @choiceColumnWidth}",
                 "items": [
                     {
                         "type": "TouchWrapper",
@@ -74,7 +74,6 @@
                             {
                                 "type": "Frame",
                                 "padding": "@spacing3XSmall",
-                                "paddingEnd": "@spacingSmall",
                                 "borderRadius": "@choiceBorderRadius",
                                 "borderColor": "@choiceBorderColor",
                                 "borderWidth": "2dp",
@@ -100,16 +99,16 @@
                                         },
                                         {
                                             "type": "Container",
-                                            "width": "${choiceListDirection == 'row' ? '80%' : '90%'}",
-                                            "spacing": "@spacingSmall",
+                                            "width": "${choiceListDirection == 'row' ? '85%' : '90%'}",
                                             "item": {
                                                 "type": "Text",
                                                 "style": "textStyleBody",
-                                                "width": "auto",
                                                 "text": "${text}",
                                                 "textAlign": "start",
                                                 "textAlignVertical": "center",
-                                                "maxLines": 2
+                                                "maxLines": 3,
+                                                "grow": 1,
+                                                "paddingLeft": "@spacing3XSmall"
                                             }
                                         }
                                     ]
