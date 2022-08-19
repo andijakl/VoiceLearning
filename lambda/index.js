@@ -56,7 +56,8 @@ const LaunchRequestHandler = {
 
         if (!config.useStudentName) {
             // Do not ask for student name
-            if (persistentAttributes.currentTrainingName) {
+            if (persistentAttributes.currentTrainingName !== undefined && persistentAttributes.currentTrainingName !== null
+                && persistentAttributes.currentTrainingName !== "") {
                 welcomeBack = true;
                 // User has already started a training - ask to resume
                 const speakQuestion = handlerInput.t("WELCOME_PERSONALIZED_REPROMPT_NONAME", {
@@ -69,11 +70,12 @@ const LaunchRequestHandler = {
                 sessionAttributes.state = config.states.CHOOSE_COURSE;
             } else {
                 // User has not started a course yet - treat as a new user!
-                availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
-                speakOutput = handlerInput.t("WELCOME_NONAME", {
+                let numTrainings = 0;
+                ({ numTrainings, availableTrainings } = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR")));
+                speakOutput = handlerInput.t((numTrainings === 1) ? "WELCOME_ONECOURSE_NONAME" : "WELCOME_NONAME", {
                     availableTrainings: availableTrainings
                 });
-                repromptOutput = handlerInput.t("WELCOME_REPROMPT_NONAME", {
+                repromptOutput = handlerInput.t((numTrainings === 1) ? "WELCOME_ONECOURSE_REPROMPT_NONAME" : "WELCOME_REPROMPT_NONAME", {
                     availableTrainings: availableTrainings
                 });
                 // Initialize new user
@@ -189,6 +191,7 @@ const ChooseCourseIntentHandler = {
     }
 };
 
+// Provide value 1 for parameter userTrainingName if there is only one available course and we should start that one.
 async function handleChooseCourse(userTrainingName, handlerInput) {
     let speakOutput = null;
     let repromptOutput = null;
@@ -297,7 +300,8 @@ const ResumeCourseIntentHandler = {
         const userId = Alexa.getUserId(handlerInput.requestEnvelope);
 
         if (sessionAttributes.state === config.states.CHOOSE_COURSE) {
-            if (persistentAttributes.currentTrainingName !== null) {
+            if (persistentAttributes.currentTrainingName !== undefined && persistentAttributes.currentTrainingName !== null
+                && persistentAttributes.currentTrainingName !== "") {
                 // Able to resume
                 let introOutput = handlerInput.t("RESUMING_COURSE_START_TRAINING", {
                     currentTrainingName: persistentAttributes.currentTrainingName
@@ -410,6 +414,7 @@ const AplTrainAgainEventHandler = {
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
+            .withShouldEndSession(!isYes)
             .getResponse();
     }
 };
@@ -423,15 +428,34 @@ const YesNoIntentHandler = {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
             && (Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent"
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.NoIntent")
-            && (sessionAttributes.state == config.states.TRAINING
+            && (sessionAttributes.state == config.states.CHOOSE_COURSE
+                || sessionAttributes.state == config.states.TRAINING
                 || sessionAttributes.state == config.states.FINISHED);
     },
     async handle(handlerInput) {
         const isYes = Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.YesIntent";
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        let speakOutput = null;
+        let repromptOutput = null;
 
-        // Yes / true & no / false handling is centralized as these
-        // answers have similar meaning in the quiz context.
-        let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
+        if (sessionAttributes.state === config.states.CHOOSE_COURSE) {
+            if (isYes) {
+                // User said yes to starting the only available course
+                ({ speakOutput, repromptOutput } = await handleChooseCourse(1, handlerInput));
+            } else {
+                // User doesn't want to start a course
+                speakOutput = handlerInput.t("DOES_NOT_WANT_TO_TRAIN");
+                return handlerInput.responseBuilder
+                    .speak(speakOutput)
+                    .withShouldEndSession(true)
+                    .getResponse();
+
+            }
+        } else {
+            // Yes / true & no / false handling is centralized as these
+            // answers have similar meaning in the quiz context.
+            ({ speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput));
+        }
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -576,7 +600,6 @@ const DeleteDataIntentHandler = {
         const speakOutput = handlerInput.t("DELETE_DATA_CONFIRMED");
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            //.reprompt('Was kann ich noch für dich tun?')
             .withShouldEndSession(true)
             .getResponse();
     }

@@ -8,8 +8,8 @@ const uiHandler = require("./uiHandler.js");
 // Active training handler functions
 
 module.exports.initializeUser = function (sessionAttributes, persistentAttributes) {
-    persistentAttributes.currentTrainingId = null;
-    persistentAttributes.currentTrainingName = null;
+    persistentAttributes.currentTrainingId = 0;
+    persistentAttributes.currentTrainingName = "";
     persistentAttributes.startedTrainings = 0;
     persistentAttributes.finishedTrainings = 0;
     persistentAttributes.totalQuestionsAsked = 0;
@@ -26,7 +26,8 @@ module.exports.selectTraining = async function selectTraining(userTrainingName, 
     // https://stackoverflow.com/questions/3010840/loop-through-an-array-in-javascript
     trainingList.forEach((item) => {
         //console.log(`Comparing ${item.TrainingName.trim()} to ${userTrainingName.trim()}`);
-        if (item.TrainingName.trim().localeCompare(userTrainingName.trim(), undefined, { sensitivity: "accent" }) === 0) {
+        if (userTrainingName === 1 ||
+            item.TrainingName.trim().localeCompare(userTrainingName.trim(), undefined, { sensitivity: "accent" }) === 0) {
             // Found a match!
             //console.log(`Found a training match! Id: ${item.TrainingId}, name: ${item.TrainingName}`);
             persistentAttributes.currentTrainingId = item.TrainingId;

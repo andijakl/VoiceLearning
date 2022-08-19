@@ -4,6 +4,8 @@ module.exports = {
 
         WELCOME_NONAME: "Hallo und Willkommen bei Voice Learning! Ich kann dir helfen, die wichtigsten Konzepte deiner Kurse zu lernen. Welchen dieser Kurse willst du starten? {{availableTrainings}}.",
         WELCOME_REPROMPT_NONAME: "Bitte wähle einen der folgenden Kurse: {{availableTrainings}}.",
+        WELCOME_ONECOURSE_NONAME: "Hallo und Willkommen bei Voice Learning! Ich kann dir helfen, die wichtigsten Konzepte deiner Kurse zu lernen. Ich kann dir derzeit bei folgendem Kurs helfen: {{availableTrainings}}. Willst du das Training starten?",
+        WELCOME_ONECOURSE_REPROMPT_NONAME: "Willst du das Training für den Kurs {{availableTrainings}} starten?",
         WELCOME_PERSONALIZED_NONAME: "Willkommen zurück! {{prompt}}",
         WELCOME_PERSONALIZED_REPROMPT_NONAME: "Würdest du gerne den letzten Kurs {{currentTrainingName}} fortsetzen oder einen anderen Kurs starten?",
 
@@ -12,6 +14,7 @@ module.exports = {
         UI_WELCOME_FINISHED_TRAININGS: "Du hast bereits {{finishedTrainings}} Trainings abgeschlossen und {{totalQuestionsAsked}} Fragen beantwortet.",
         UI_HINT_RESUME_START_ANOTHER: "Sag: \"fortsetzen\" oder \"anderen Kurs starten\"",
         UI_HINT_CHOOSE_COURSE: "Sag: starte {{availableTrainings}}",
+        UI_HINT_ONE_COURSE_START: "Sag: \"ja\" um das Training zu starten",
 
         WELCOME: "Hallo und Willkommen bei Voice Learning! Ich kann dir helfen, die wichtigsten Konzepte deiner Kurse zu lernen. Zuerst, sag mir bitte deinen Vornamen!",
         WELCOME_REPROMPT: "Please tell me your first name.",
@@ -29,6 +32,7 @@ module.exports = {
         SELECTED_COURSE_START_TRAINING: "Du hast den Kurs {{currentTrainingName}} gewählt. Legen wir los!",
         RESUMING_COURSE_START_TRAINING: "Setze den Kurs {{currentTrainingName}} fort.",
         RESTART_COURSE_START_TRAINING: "Wiederhole den Kurs {{currentTrainingName}}.",
+        DOES_NOT_WANT_TO_TRAIN: "OK. Wenn du später mit dem Training beginnen möchtest, starte Voice Learning einfach nochmal.",
 
         HELP_PROMPT: "Ich bin dein Voice Learning Assistent und stelle dir Fragen zu deinen Kursen, die dir helfen, dir die Inhalte zu merken. Das funktioniert wie ein Quiz!",
         HELP_STATE_CHOOSE_COURSE: "Jetzt musst du dich für einen Kurs entscheiden. Du kannst mich erneut nach verfügbaren Kursen fragen, wenn du diese noch einmal hören willst. Sage dann einfach den Namen des Kurses, den du beginnen möchtest.",
@@ -62,7 +66,7 @@ module.exports = {
         FALLBACK: "Sorry, I didn't catch that. Say that again please.",
         FALLBACK_REPROMPT: "Say that again please.",
         ERROR: "Leider hat etwas nicht geklappt. Bitte versuche es noch einmal.",
-        EXIT: "Bis zum nächsten Mal!",
+        EXIT: "Bis zum nächsten Mal! Wenn du das Training später fortsetzen willst, starte Voice Learning einfach nochmal.",
 
         UI_TRAINING_FINISHED_HEADLINE: "Fertig!",
         UI_TRAINING_FINISHED_TEXT: "Du hast {{score}} von {{questionNumber}} Punkten erreicht<br>Du hast bereits {{finishedTrainings}} Trainings abgeschlossen.",

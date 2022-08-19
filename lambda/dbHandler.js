@@ -59,10 +59,16 @@ module.exports.getTrainingNames = async function getTrainingNames(language) {
 
 module.exports.getTrainingNamesForSpeech = async function getTrainingNamesForSpeech(language, lastSeparator) {
     let trainingNames = await module.exports.getTrainingNames(language);
-    return module.exports.getTrainingNamesForSpeechListAvailable(trainingNames, lastSeparator);
+    return {
+        numTrainings: trainingNames.length,
+        availableTrainings: module.exports.getTrainingNamesForSpeechListAvailable(trainingNames, lastSeparator)
+    };
 };
 
 module.exports.getTrainingNamesForSpeechListAvailable = function getTrainingNamesForSpeechListAvailable(trainingNames, lastSeparator) {
+    if (trainingNames.length === 1) {
+        return trainingNames[0];
+    }
     return trainingNames.slice(0, -1).join(", ") + lastSeparator + trainingNames.slice(-1);
 };
 
