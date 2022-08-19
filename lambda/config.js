@@ -14,6 +14,7 @@ module.exports = {
     useStudentName: false,
     aplTokens: {
         QUESTION: "questionToken",
+        QUESTION2: "questionToken2",
         WELCOME: "welcomeToken",
         CHOOSE_COURSE: "chooseCourseToken",
         FINISHED: "finishedToken"

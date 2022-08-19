@@ -4,7 +4,32 @@ const util = require("./util");
 const aplWelcomeDocument = require("./response/display/welcome/document.json");
 const aplChooseCourseDocument = require("./response/display/choose_course/document.json");
 const aplTrainingQuestionDocument = require("./response/display/training_question/document.json");
+const aplTrainingQuestionDocument2 = require("./response/display/training_q/document.json");
 const aplFinishedDocument = require("./response/display/training_finished/document.json");
+
+module.exports.showQuestionUi2 = function showQuestionUi2(trainingName, questionText, possibleAnswersString, handlerInput) {
+    const possibleAnswers = possibleAnswersString.split("|");
+    // let textListItemList = [];
+    // for (const [, curAnswerText] of possibleAnswers.entries()) {
+    //     textListItemList.push({ "primaryText": curAnswerText });
+    // }
+
+    const dataSources = {
+        multipleChoiceTemplateData: {
+            "type": "object",
+            "properties": {
+                "backgroundImage": "https://alexa-voice-learning-images.s3.eu-west-1.amazonaws.com/VoiceLearning-Cap-Large-Blue.png",
+                "titleText": trainingName,
+                "primaryText": questionText,
+                "choices": possibleAnswers,
+                "choiceListType": "number",
+                "headerAttributionImage": "https://alexa-voice-learning-images.s3.eu-west-1.amazonaws.com/VoiceLearningSkill.png",
+                "footerHintText": "Say for example: \"The Answer is 1.\""
+            }
+        }
+    };
+    util.addAplIfSupported(handlerInput, config.aplTokens.QUESTION2, aplTrainingQuestionDocument2, dataSources);
+};
 
 module.exports.showQuestionUi = function showQuestionUi(questionText, possibleAnswersString, handlerInput) {
     const possibleAnswers = possibleAnswersString.split("|");

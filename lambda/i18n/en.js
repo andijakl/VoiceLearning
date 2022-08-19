@@ -12,7 +12,7 @@ module.exports = {
         UI_WELCOME: "Welcome to Voice Learning!",
         UI_WELCOME_PERSONALIZED: "Welcome back!",
         UI_WELCOME_FINISHED_TRAININGS: "You already completed {{finishedTrainings}} trainings and answered {{totalQuestionsAsked}} questions.",
-        UI_HINT_RESUME_START_ANOTHER: "Say: \"resume\" or \"start another course\"",
+        UI_HINT_RESUME_START_ANOTHER: "Say: \"resume the course\" or \"start another course\"",
         UI_HINT_CHOOSE_COURSE: "Say: start {{availableTrainings}}",
         UI_HINT_ONE_COURSE_START: "Say \"yes\" to start the training",
 

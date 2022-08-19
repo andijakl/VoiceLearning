@@ -106,15 +106,7 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
     let repromptOutput = null;
 
     if (sessionAttributes.state === config.states.TRAINING) {
-        // Update attributes
-        if (sessionAttributes.questionType !== config.questionType.NUMERIC) {
-            // We do not expect yes/no for this question type
-            speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
-                answerAsText: numericAnswer
-            });
-            speakOutput += " " + sessionAttributes.questionTextWithAnswers;
-            repromptOutput = sessionAttributes.questionTextWithAnswers;
-        } else {
+        if (sessionAttributes.questionType === config.questionType.NUMERIC) {
             // Repeat what the user said
             const answerAsInt = parseInt(numericAnswer);
             const answerText = getTextForPossibleAnswer(answerAsInt, sessionAttributes.possibleAnswersString);
@@ -134,6 +126,18 @@ module.exports.handleNumericIntent = async function handleNumericIntent(numericA
                 speakOutput += " " + sessionAttributes.questionTextWithAnswers;
                 repromptOutput = sessionAttributes.questionTextWithAnswers;
             }
+        } else if (sessionAttributes.questionType === config.questionType.YES_NO) {
+            // One == true, Two == false
+            const answerAsInt = parseInt(numericAnswer);
+            const isYes = (answerAsInt === 1);
+            ({ speakOutput, repromptOutput } = await module.exports.handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, language));
+        } else {
+            // We do not expect numeric answers for this question type
+            speakOutput = handlerInput.t("ERROR_TRAINING_INVALID_ANSWER", {
+                answerAsText: numericAnswer
+            });
+            speakOutput += " " + sessionAttributes.questionTextWithAnswers;
+            repromptOutput = sessionAttributes.questionTextWithAnswers;
         }
     } else {
         // Not in training
@@ -185,20 +189,14 @@ async function getNextQuestion(userId, sessionAttributes, persistentAttributes, 
     if (sessionAttributes.questionNumber >= config.numQuestionsPerTraining) {
         // Training finished
         ({ speakOutput, repromptOutput } = await trainingFinished(null, sessionAttributes, persistentAttributes, handlerInput));
-        // speakOutput = handlerInput.t("TRAINING_FINISHED", {
-        //     score: sessionAttributes.score,
-        //     questionNumber: sessionAttributes.questionNumber,
-        //     finishedTrainings: persistentAttributes.finishedTrainings
-        // });
-        // repromptOutput = handlerInput.t("TRAINING_RESTART_PROMPT");
-        // speakOutput += " " + repromptOutput;
     } else {
         ({ speakOutput, repromptOutput } = await getQuestionText(userId, sessionAttributes, persistentAttributes, handlerInput, language));
         // Add to UI (APL)
         if (sessionAttributes.state === config.states.TRAINING) {
             // Still in training mode? Update UI with new question
             //console.log("Calling show question UI: " + sessionAttributes.possibleAnswersString);
-            uiHandler.showQuestionUi(sessionAttributes.questionText, sessionAttributes.possibleAnswersString, handlerInput);
+            //uiHandler.showQuestionUi(sessionAttributes.questionText, sessionAttributes.possibleAnswersString, handlerInput);
+            uiHandler.showQuestionUi2(sessionAttributes.TrainingName, sessionAttributes.questionText, sessionAttributes.possibleAnswersString, handlerInput);
         }
     }
 
