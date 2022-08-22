@@ -34,6 +34,8 @@ module.exports = {
         RESTART_COURSE_START_TRAINING: "Restarting course {{currentTrainingName}}.",
         DOES_NOT_WANT_TO_TRAIN: "Ok. If you want to start training later, please start voice learning again.",
 
+        INSTRUCTIONS: "A quick intro: I will now as you {{numQuestions}} questions. These are from two categories. Either, simply answer \"true\" or \"false\". For multiple choice questions, please answer with the answer-number (like one or two) instead of the description text. When you start another training, I'll ask you new questions and repeat especially the ones you got wrong the last time.",
+
         HELP_PROMPT: "I'm the teaching assistant and can ask you questions to help you learn for your courses. It works like a quiz!",
         HELP_STATE_CHOOSE_COURSE: "Right now, you need to choose a course. You can ask me again for available courses to hear them again. Then, just say the name of the course you'd like to start.",
         HELP_STATE_TRAINING: "Right now, you need to answer the question. For questions that let you choose between multiple options, please answer with the number of the correct option. For true or false questions, please simply answer with true or false.",

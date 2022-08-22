@@ -34,6 +34,8 @@ module.exports = {
         RESTART_COURSE_START_TRAINING: "Wiederhole den Kurs {{currentTrainingName}}.",
         DOES_NOT_WANT_TO_TRAIN: "OK. Wenn du später mit dem Training beginnen möchtest, starte Voice Learning einfach nochmal.",
 
+        INSTRUCTIONS: "Eine kurze Einführung: Ich werde dir jetzt {{numQuestions}} Fragen stellen. Diese stammen aus zwei Kategorien. Antworte entweder einfach mit \"wahr\" oder \"falsch\". Bei Multiple-Choice-Fragen antworte bitte mit der entsprechenden Nummer anstelle des Beschreibungstextes, zum Beispiel Eins oder Zwei. Wenn du ein weiteres Training beginnst, stelle ich dir neue Fragen sowie insbesondere diejenigen erneut, die du beim letzten Mal falsch beantwortet habst.",
+
         HELP_PROMPT: "Ich bin dein Voice Learning Assistent und stelle dir Fragen zu deinen Kursen, die dir helfen, dir die Inhalte zu merken. Das funktioniert wie ein Quiz!",
         HELP_STATE_CHOOSE_COURSE: "Jetzt musst du dich für einen Kurs entscheiden. Du kannst mich erneut nach verfügbaren Kursen fragen, wenn du diese noch einmal hören willst. Sage dann einfach den Namen des Kurses, den du beginnen möchtest.",
         HELP_STATE_TRAINING: "Jetzt musst du eine Frage beantworten. Bei Fragen, bei denen du zwischen mehreren Optionen wählen kannst, antworte bitte mit der Nummer der richtigen Antwort. Bei Fragen nach wahr oder falsch, antworte bitte entsprechend direkt mit wahr oder falsch.",

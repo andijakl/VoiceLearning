@@ -49,7 +49,15 @@ module.exports.startNewTraining = async function startNewTraining(userId, sessio
     sessionAttributes.questionsAskedThisSession = [];
     // Get current question list
     sessionAttributes.questionList = await dbHandler.getQuestionIdListForTraining(persistentAttributes.currentTrainingId);
-    return await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language);
+
+    let { speakOutput, repromptOutput } = await getNextQuestion(userId, sessionAttributes, persistentAttributes, handlerInput, language);
+    // Add instructions when starting the first training
+    if (persistentAttributes.startedTrainings === 1) {
+        speakOutput = handlerInput.t("INSTRUCTIONS", {
+            numQuestions: config.numQuestionsPerTraining
+        }) + " " + speakOutput;
+    }
+    return { speakOutput, repromptOutput };
 };
 
 module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userId, sessionAttributes, persistentAttributes, handlerInput, language) {
