@@ -172,6 +172,13 @@ module.exports.handleFallbackIntent = async function handleFallbackIntent(isInFa
     //const speakOutput = `Fallback handler for ${intentName}`;
     if (sessionAttributes.state === config.states.TRAINING) {
         speakOutput = handlerInput.t("FALLBACK_WHILE_TRAINING");
+        // Provide help for question type
+        if (sessionAttributes.questionType === config.questionType.NUMERIC) {
+            speakOutput += " " + handlerInput.t("FALLBACK_WHILE_TRAINING_NUMERIC");
+        } else if (sessionAttributes.questionType === config.questionType.YES_NO) {
+            speakOutput += " " + handlerInput.t("FALLBACK_WHILE_TRAINING_YES_NO");
+        }
+        speakOutput += " " + handlerInput.t("FALLBACK_REPEAT_QUESTION");
     } else if (sessionAttributes.state == config.states.STUDENT_NAME) {
         speakOutput = handlerInput.t("FALLBACK_WHILE_NAME");
     } else {

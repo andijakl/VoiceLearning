@@ -34,7 +34,7 @@ module.exports = {
         RESTART_COURSE_START_TRAINING: "Wiederhole den Kurs {{currentTrainingName}}.",
         DOES_NOT_WANT_TO_TRAIN: "OK. Wenn du später mit dem Training beginnen möchtest, starte Voice Learning einfach nochmal.",
 
-        INSTRUCTIONS: "Eine kurze Einführung: Ich werde dir jetzt {{numQuestions}} Fragen stellen. Diese stammen aus zwei Kategorien. Antworte entweder einfach mit \"wahr\" oder \"falsch\". Bei Multiple-Choice-Fragen antworte bitte mit der entsprechenden Nummer anstelle des Beschreibungstextes, zum Beispiel Eins oder Zwei. Wenn du ein weiteres Training beginnst, stelle ich dir neue Fragen sowie insbesondere diejenigen erneut, die du beim letzten Mal falsch beantwortet habst.",
+        INSTRUCTIONS: "Eine kurze Einführung: Ich werde dir jetzt {{numQuestions}} Fragen stellen. Diese stammen aus zwei Kategorien. Antworte entweder einfach mit \"wahr\" oder \"falsch\". Bei Multiple-Choice-Fragen antworte bitte mit der entsprechenden Nummer anstelle des Beschreibungstextes, zum Beispiel Eins oder Zwei. Wenn du ein weiteres Training beginnst, stelle ich dir neue Fragen sowie insbesondere diejenigen erneut, die du beim letzten Mal falsch beantwortet hast.",
 
         HELP_PROMPT: "Ich bin dein Voice Learning Assistent und stelle dir Fragen zu deinen Kursen, die dir helfen, dir die Inhalte zu merken. Das funktioniert wie ein Quiz!",
         HELP_STATE_CHOOSE_COURSE: "Jetzt musst du dich für einen Kurs entscheiden. Du kannst mich erneut nach verfügbaren Kursen fragen, wenn du diese noch einmal hören willst. Sage dann einfach den Namen des Kurses, den du beginnen möchtest.",
@@ -55,7 +55,10 @@ module.exports = {
         TRAINING_FINISHED_NO_RESTART: "Vielen Dank, dass ich dir heute beim Lernen helfen konnte. Bis zum nächsten Mal!",
         TRAINING_RESTART_PROMPT: "Willst du noch ein Training starten?",
         DELETE_DATA_CONFIRMED: "Ich habe deine persönlichen Daten gelöscht. Bitte starte den Skill noch einmal, wenn du noch einmal trainieren willst. Bis zum nächsten Mal!",
-        FALLBACK_WHILE_TRAINING: "Ich kann das nicht machen, während du gerade ein Training durchführst. Bitte fahre mit dem Training fort!",
+        FALLBACK_WHILE_TRAINING: "Du befindest dich gerade in einem Training. Bitte beantworte die Frage.",
+        FALLBACK_WHILE_TRAINING_YES_NO: "Du kannst mit \"wahr\" oder \"falsch\" antworten.",
+        FALLBACK_WHILE_TRAINING_NUMERIC: "Nenne die Zahl der richtigen Antwort; sag zum Beispiel: \"Die Antwort ist eins\".",
+        FALLBACK_REPEAT_QUESTION: "Ich werde jetzt die Frage wiederholen.",
         FALLBACK_WHILE_NAME: "Ich kann das gerade nicht machen. Sag mir bitte zuerst deinen Namen.",
         FALLBACK_GENERIC: "Ich kann das gerade nicht machen.",
         ERROR_NOT_IN_TRAINING_MODE: "Du bist gerade nicht in einem aktiven Training.",
