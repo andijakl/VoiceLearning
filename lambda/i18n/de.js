@@ -17,7 +17,7 @@ module.exports = {
         UI_HINT_ONE_COURSE_START: "Sag: \"ja\" um das Training zu starten",
 
         WELCOME: "Hallo und Willkommen bei Voice Learning! Ich kann dir helfen, die wichtigsten Konzepte deiner Kurse zu lernen. Zuerst, sag mir bitte deinen Vornamen!",
-        WELCOME_REPROMPT: "Please tell me your first name.",
+        WELCOME_REPROMPT: "Bitte sag mir deinen Vornamen.",
         WELCOME_PERSONALIZED: "Willkommen zurück {{studentName}}! {{prompt}}",
         //WELCOME_PERSONALIZED: "Welcome back <alexa:name type='first' personId='{{personId}}' />! <break /> {{prompt}}",
         WELCOME_PERSONALIZED_REPROMPT: "Würdest du gerne den letzten Kurs fortsetzen oder einen anderen Kurs starten?",
@@ -56,7 +56,7 @@ module.exports = {
         TRAINING_RESTART_PROMPT: "Willst du noch ein Training starten?",
         DELETE_DATA_CONFIRMED: "Ich habe deine persönlichen Daten gelöscht. Bitte starte den Skill noch einmal, wenn du noch einmal trainieren willst. Bis zum nächsten Mal!",
         FALLBACK_WHILE_TRAINING: "Du befindest dich gerade in einem Training. Bitte beantworte die Frage.",
-        FALLBACK_WHILE_TRAINING_YES_NO: "Du kannst mit \"wahr\" oder \"falsch\" antworten.",
+        FALLBACK_WHILE_TRAINING_YES_NO: "Du kannst mit \"richtig\" oder \"falsch\" antworten.",
         FALLBACK_WHILE_TRAINING_NUMERIC: "Nenne die Zahl der richtigen Antwort; sag zum Beispiel: \"Die Antwort ist eins\".",
         FALLBACK_REPEAT_QUESTION: "Ich werde jetzt die Frage wiederholen.",
         FALLBACK_WHILE_NAME: "Ich kann das gerade nicht machen. Sag mir bitte zuerst deinen Namen.",

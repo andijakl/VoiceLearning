@@ -28,6 +28,11 @@
             }
           ],
           "samples": [
+            "I want to learn {course}",
+            "I want to start {course}",
+            "Start {course} please",
+            "Start the course {course}",
+            "Please start the course {course}",
             "Lecture {course}",
             "Start {course}",
             "I want to train {course}",
@@ -53,6 +58,9 @@
             }
           ],
           "samples": [
+            "{numericAnswer} is right",
+            "{numericAnswer} is the answer",
+            "{numericAnswer} is the correct answer",
             "The answer is {numericAnswer}",
             "It is {numericAnswer}",
             "I choose {numericAnswer}",
@@ -124,6 +132,8 @@
             }
           ],
           "samples": [
+            "{TrueFalse} is the right answer",
+            "{TrueFalse} is correct",
             "I think {TrueFalse}",
             "I think it is {TrueFalse}",
             "The answer is {TrueFalse}",
@@ -196,5 +206,5 @@
       }
     }
   },
-  "version": "70"
+  "version": "73"
 }

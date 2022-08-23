@@ -205,7 +205,7 @@ async function handleChooseCourse(userTrainingName, handlerInput) {
 
     if (userTrainingName === undefined || userTrainingName === null) {
         speakOutput = handlerInput.t("ERROR_COURSE_NOT_UNDERSTOOD");
-        const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+        const { availableTrainings } = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
         repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
             availableTrainings: availableTrainings
         });
@@ -226,7 +226,7 @@ async function handleChooseCourse(userTrainingName, handlerInput) {
             speakOutput = handlerInput.t("ERROR_COURSE_NOT_FOUND", {
                 userTrainingName: userTrainingName
             });
-            const availableTrainings = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
+            const { availableTrainings } = await dbHandler.getTrainingNamesForSpeech(getMainLanguage(), handlerInput.t("AVAILABLE_COURSES_OR"));
             repromptOutput = handlerInput.t("AVAILABLE_COURSES_REPROMPT", {
                 availableTrainings: availableTrainings
             });
