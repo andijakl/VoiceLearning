@@ -20,3 +20,5 @@ module.exports = {
         FINISHED: "finishedToken"
     }
 };
+// Consts
+module.exports.DO_NOT_CONTINUE = "STOP-SKILL";

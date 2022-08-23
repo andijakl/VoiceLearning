@@ -274,6 +274,9 @@ const ListCoursesIntentHandler = {
             // Show UI only if we're in the choose course state
             uiHandler.showChooseCourseUi(trainingNames, handlerInput);
         }
+        if (!repromptOutput) {
+            repromptOutput = speakOutput;
+        }
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -369,6 +372,9 @@ const AplTrainingQuestionEventHandler = {
             ({ speakOutput, repromptOutput } = await HandleNumericAnswer(clickedListItemNum, handlerInput));
         }
 
+        if (!repromptOutput) {
+            repromptOutput = speakOutput;
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -392,6 +398,9 @@ const AplChooseCourseEventHandler = {
 
         let { speakOutput, repromptOutput } = await handleChooseCourse(userTrainingName, handlerInput);
 
+        if (!repromptOutput) {
+            repromptOutput = speakOutput;
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -411,6 +420,9 @@ const AplTrainAgainEventHandler = {
 
         let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
 
+        if (!repromptOutput) {
+            repromptOutput = speakOutput;
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -457,6 +469,13 @@ const YesNoIntentHandler = {
             ({ speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput));
         }
 
+        // User does not want to continue after the last question
+        if (repromptOutput === config.DO_NOT_CONTINUE) {
+            return handlerInput.responseBuilder
+                .speak(speakOutput)
+                .withShouldEndSession(true)
+                .getResponse();
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -486,6 +505,13 @@ const TrueFalseIntentHandler = {
         // answers have similar meaning in the quiz context.
         let { speakOutput, repromptOutput } = await HandleYesNoTrueFalse(isYes, handlerInput);
 
+        // User does not want to continue after the last question
+        if (repromptOutput === config.DO_NOT_CONTINUE) {
+            return handlerInput.responseBuilder
+                .speak(speakOutput)
+                .withShouldEndSession(true)
+                .getResponse();
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -503,11 +529,6 @@ async function HandleYesNoTrueFalse(isYes, handlerInput) {
 
     repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
-    // User doesn't want to continue with the skill - stop
-    if (repromptOutput === -1) {
-        // Stop the skill
-        repromptOutput = null;
-    }
     return { speakOutput, repromptOutput };
 }
 
@@ -526,6 +547,13 @@ const NumericAnswerIntentHandler = {
 
         let { speakOutput, repromptOutput } = await HandleNumericAnswer(numericAnswer, handlerInput);
 
+        // User does not want to continue after the last question
+        if (repromptOutput === config.DO_NOT_CONTINUE) {
+            return handlerInput.responseBuilder
+                .speak(speakOutput)
+                .withShouldEndSession(true)
+                .getResponse();
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -546,12 +574,6 @@ async function HandleNumericAnswer(numericAnswer, handlerInput) {
 
     repromptOutput = await saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput);
 
-    // User doesn't want to continue with the skill - stop
-    if (repromptOutput === -1) {
-        // Stop the skill
-        repromptOutput = null;
-    }
-
     return { speakOutput, repromptOutput };
 }
 
@@ -559,12 +581,16 @@ async function HandleNumericAnswer(numericAnswer, handlerInput) {
 // Utility functions
 
 async function saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput) {
-    if (repromptOutput === null) {
+    if (!repromptOutput) {
         repromptOutput = speakOutput;
     }
 
     // Save state
-    sessionAttributes.repromptOutput = repromptOutput;
+    if (repromptOutput === config.DO_NOT_CONTINUE) {
+        sessionAttributes.repromptOutput = null;
+    } else {
+        sessionAttributes.repromptOutput = repromptOutput;
+    }
     handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
     await handlerInput.attributesManager.savePersistentAttributes();
     handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
@@ -625,7 +651,7 @@ const HelpIntentHandler = {
         }
 
         let repromptOutput = handlerInput.t("GENERIC_REPROMPT");
-        if (sessionAttributes.repromptOutput !== null) {
+        if (sessionAttributes.repromptOutput) {
             repromptOutput = sessionAttributes.repromptOutput;
         }
 
@@ -675,6 +701,9 @@ const FallbackIntentHandler = {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
         let { speakOutput, repromptOutput } = await trainingHandler.handleFallbackIntent(true, handlerInput, intentName);
 
+        if (!repromptOutput) {
+            repromptOutput = speakOutput;
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)
@@ -694,6 +723,9 @@ const IntentReflectorHandler = {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
         let { speakOutput, repromptOutput } = await trainingHandler.handleFallbackIntent(false, handlerInput, intentName);
 
+        if (!repromptOutput) {
+            repromptOutput = speakOutput;
+        }
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptOutput)

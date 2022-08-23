@@ -95,7 +95,7 @@ module.exports.handleYesNoIntent = async function handleYesNoIntent(isYes, userI
         } else {
             // Finished training and user doesn't want to restart
             speakOutput = handlerInput.t("TRAINING_FINISHED_NO_RESTART");
-            repromptOutput = -1;
+            repromptOutput = config.DO_NOT_CONTINUE;
         }
     } else {
         // Not in training
