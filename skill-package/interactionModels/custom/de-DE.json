@@ -28,6 +28,13 @@
             }
           ],
           "samples": [
+            "{course} möchte ich starten",
+            "Ich will den Kurs {course}",
+            "Den Kurs {course}",
+            "Starte den Kurs {course} bitte",
+            "Bitte starte den Kurs {course}",
+            "Starte den Kurs {course}",
+            "Bitte starte {course}",
             "Kurs {course}",
             "Starte {course}",
             "Ich will {course} üben",
@@ -53,6 +60,9 @@
             }
           ],
           "samples": [
+            "{numericAnswer} ist korrekt",
+            "{numericAnswer} ist richtig",
+            "Das ist {numericAnswer}",
             "Die Antwort ist {numericAnswer}",
             "Es ist {numericAnswer}",
             "Ich wähle {numericAnswer}",
@@ -125,6 +135,9 @@
             }
           ],
           "samples": [
+            "{TrueFalse} ist korrekt",
+            "{TrueFalse} ist richtig",
+            "Das ist {TrueFalse}",
             "Ich denke {TrueFalse}",
             "Ich denke es ist {TrueFalse}",
             "Die Antwort ist {TrueFalse}",
@@ -198,5 +211,5 @@
       }
     }
   },
-  "version": "54"
+  "version": "55"
 }
