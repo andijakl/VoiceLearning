@@ -1,9 +1,9 @@
 // @ts-check
 "use strict";
 
-// Warning: only deploy with Powershell 7, issues with "normal" PowerShell: https://github.com/alexa/ask-cli/issues/59
 // TODO: maybe add dynamic entities, see: https://developer.amazon.com/en-US/docs/alexa/custom-skills/use-dynamic-entities-for-customized-interactions.html
 // https://github.com/alexa-samples/dynamic-entities-demo
+// Or the Amazon.Search entity type: https://developer.amazon.com/en-US/docs/alexa/custom-skills/built-in-intent-library.html#search
 
 const Alexa = require("ask-sdk-core");
 const i18next = require("i18next");
@@ -30,9 +30,6 @@ const languageStrings = {
     "en": require("./i18n/en"),
     "de": require("./i18n/de"),
 };
-
-// APL
-//const aplTrainingQuestionDocument = require("./response/display/training_question/document.json");
 
 // -------------------------------------------------------------------
 // Launch intent handler

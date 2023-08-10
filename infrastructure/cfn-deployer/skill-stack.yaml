@@ -17,28 +17,28 @@ Parameters:
     Default: Learning-Assistant
 Resources:
   AlexaSkillIAMRole:
-      Type: AWS::IAM::Role
-      Properties:
-        AssumeRolePolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action:
-                - sts:AssumeRole
-        Path: /
-        Policies:
-          - PolicyName: alexaSkillExecutionPolicy
-            PolicyDocument:
-              Version: 2012-10-17
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - logs:*
-                    - dynamodb:*
-                  Resource: "*"
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: alexaSkillExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                  - dynamodb:*
+                Resource: "*"
   AlexaSkillFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -53,7 +53,7 @@ Resources:
       Timeout: 60
       Environment:
         Variables:
-           DYNAMODB_TABLE_NAME: !Ref PersistentAttributeTableName
+          DYNAMODB_TABLE_NAME: !Ref PersistentAttributeTableName
   AlexaSkillFunctionEventPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -64,15 +64,13 @@ Resources:
   AlexaPersistentAttributesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName:  !Ref PersistentAttributeTableName
+      TableName: !Ref PersistentAttributeTableName
       BillingMode: PROVISIONED
       AttributeDefinitions:
-        -
-          AttributeName: "id"
+        - AttributeName: "id"
           AttributeType: "S"
       KeySchema:
-        -
-          AttributeName: "id"
+        - AttributeName: "id"
           KeyType: "HASH"
       ProvisionedThroughput:
         ReadCapacityUnits: 5
