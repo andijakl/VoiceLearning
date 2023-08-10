@@ -13,11 +13,11 @@
   "author": "Andreas Jakl",
   "license": "MIT",
   "dependencies": {
-    "ask-sdk-core": "^2.12.1",
-    "ask-sdk-dynamodb-persistence-adapter": "^2.12.1",
-    "ask-sdk-model": "^1.38.3",
-    "aws-sdk": "^2.1354.0",
-    "i18next": "^21.9.0",
+    "ask-sdk-core": "^2.14.0",
+    "ask-sdk-dynamodb-persistence-adapter": "^2.14.0",
+    "ask-sdk-model": "^1.84.0",
+    "aws-sdk": "^2.1433.0",
+    "i18next": "^23.4.4",
     "i18next-sprintf-postprocessor": "^0.2.2",
     "sprintf-js": "^1.1.2"
   },
