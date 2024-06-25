@@ -1,7 +1,6 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "voice learning",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",
@@ -20,13 +19,13 @@
           "samples": []
         },
         {
-          "name": "ChooseCourseIntent",
           "slots": [
             {
               "name": "course",
               "type": "CourseName"
             }
           ],
+          "name": "ChooseCourseIntent",
           "samples": [
             "{course} möchte ich starten",
             "Ich will den Kurs {course}",
@@ -52,13 +51,13 @@
           "samples": []
         },
         {
-          "name": "NumericAnswerIntent",
           "slots": [
             {
               "name": "numericAnswer",
               "type": "AMAZON.NUMBER"
             }
           ],
+          "name": "NumericAnswerIntent",
           "samples": [
             "{numericAnswer} ist korrekt",
             "{numericAnswer} ist richtig",
@@ -72,8 +71,8 @@
           ]
         },
         {
-          "name": "ResumeCourseIntent",
           "slots": [],
+          "name": "ResumeCourseIntent",
           "samples": [
             "Bitte fortsetzen",
             "Ich würde gerne fortsetzen",
@@ -90,8 +89,8 @@
           ]
         },
         {
-          "name": "DeleteDataIntent",
           "slots": [],
+          "name": "DeleteDataIntent",
           "samples": [
             "Lösche meinen Fortschritt",
             "Lösche meine Daten",
@@ -101,8 +100,8 @@
           ]
         },
         {
-          "name": "ListCoursesIntent",
           "slots": [],
+          "name": "ListCoursesIntent",
           "samples": [
             "Liste der Trainings",
             "Liste der Kurse",
@@ -127,13 +126,13 @@
           "samples": []
         },
         {
-          "name": "TrueFalseAnswerIntent",
           "slots": [
             {
               "name": "TrueFalse",
               "type": "TrueFalse"
             }
           ],
+          "name": "TrueFalseAnswerIntent",
           "samples": [
             "{TrueFalse} ist korrekt",
             "{TrueFalse} ist richtig",
@@ -144,15 +143,17 @@
             "{TrueFalse}",
             "Es ist {TrueFalse}"
           ]
+        },
+        {
+          "name": "AMAZON.RepeatIntent",
+          "samples": []
         }
       ],
       "types": [
         {
           "values": [
             {
-              "id": "2",
               "name": {
-                "value": "3D Visualization",
                 "synonyms": [
                   "3D Grafik",
                   "Drei D Visualisierung",
@@ -164,21 +165,23 @@
                   "Visualization",
                   "Three Dee Graphics",
                   "3D Graphics"
-                ]
-              }
+                ],
+                "value": "3D Visualization"
+              },
+              "id": "2"
             },
             {
-              "id": "1",
               "name": {
-                "value": "Web Technologies",
                 "synonyms": [
                   "Internet Technologien",
                   "Web Technologien",
                   "Web Tech",
                   "Internet",
                   "Web"
-                ]
-              }
+                ],
+                "value": "Web Technologies"
+              },
+              "id": "1"
             }
           ],
           "name": "CourseName"
@@ -187,12 +190,12 @@
           "values": [
             {
               "name": {
-                "value": "falsch",
                 "synonyms": [
                   "ungültig",
                   "nicht korrekt",
                   "unkorrekt"
-                ]
+                ],
+                "value": "falsch"
               }
             },
             {
@@ -204,12 +207,12 @@
           "name": "TrueFalse"
         }
       ],
+      "invocationName": "voice learning",
       "modelConfiguration": {
         "fallbackIntentSensitivity": {
           "level": "LOW"
         }
       }
     }
-  },
-  "version": "55"
+  }
 }

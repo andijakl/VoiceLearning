@@ -578,6 +578,7 @@ async function HandleNumericAnswer(numericAnswer, handlerInput) {
 // Utility functions
 
 async function saveAttributes(speakOutput, repromptOutput, sessionAttributes, persistentAttributes, handlerInput) {
+    sessionAttributes.speakOutput = speakOutput;
     if (!repromptOutput) {
         repromptOutput = speakOutput;
     }
@@ -638,18 +639,54 @@ const HelpIntentHandler = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         //const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
         let speakOutput = handlerInput.t("HELP_PROMPT");
+        let specificOutput = null;
 
+        // Add specific help text for the current state
         if (sessionAttributes.state === config.states.CHOOSE_COURSE) {
-            speakOutput += " " + handlerInput.t("HELP_STATE_CHOOSE_COURSE");
+            specificOutput = handlerInput.t("HELP_STATE_CHOOSE_COURSE");
         } else if (sessionAttributes.state === config.states.TRAINING) {
-            speakOutput += " " + handlerInput.t("HELP_STATE_TRAINING");
+            specificOutput = handlerInput.t("HELP_STATE_TRAINING");
         } else if (sessionAttributes.state === config.states.FINISHED) {
-            speakOutput += " " + handlerInput.t("HELP_STATE_FINISHED");
+            specificOutput = handlerInput.t("HELP_STATE_FINISHED");
+        }
+        if (specificOutput !== null) {
+            speakOutput += " " + specificOutput;
         }
 
-        let repromptOutput = handlerInput.t("GENERIC_REPROMPT");
+        let repromptOutput = (specificOutput !== null ? specificOutput + " " : "") + handlerInput.t("GENERIC_REPROMPT");
         if (sessionAttributes.repromptOutput) {
             repromptOutput = sessionAttributes.repromptOutput;
+        }
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(repromptOutput)
+            .getResponse();
+    }
+};
+
+
+const RepeatIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.RepeatIntent";
+    },
+    async handle(handlerInput) {
+        // Get attributes
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        // Ensure speakOutput and repromptOutput have default values if not set
+        let speakOutput = sessionAttributes.speakOutput;
+        let repromptOutput = sessionAttributes.repromptOutput;
+
+        // If there is no speakOutput, let the fallback handler take over
+        if (!speakOutput) {
+            const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+            ({ speakOutput, repromptOutput } = await trainingHandler.handleFallbackIntent(true, handlerInput, intentName));
+        }
+
+        // If there is no repromptOutput, use the speakOutput
+        if (!repromptOutput) {
+            repromptOutput = speakOutput;
         }
 
         return handlerInput.responseBuilder
@@ -802,6 +839,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         AplTrainAgainEventHandler,
         // Generic Alexa
         HelpIntentHandler,
+        RepeatIntentHandler,
         CancelAndStopIntentHandler,
         SessionEndedRequestHandler,
         FallbackIntentHandler,
